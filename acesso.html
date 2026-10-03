@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seu acesso | LowLab</title>
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="https://lowlab.maurobondanca.chatgpt.site/assets/lowlab-symbol-ui.png">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#040b08;--card:rgba(8,20,15,.86);--cream:#f7f0e4;--gold:#c9a96e;--goldl:#e7cf9e;--muted:rgba(247,240,228,.66);--line:rgba(255,248,234,.13);--err:#ff9c8a;--ok:#9fe0b4}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--cream);font-family:Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:28px 16px;min-height:100vh;position:relative;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:-1;background:#06110c url("https://lowlab.maurobondanca.chatgpt.site/assets/university-campus-hero-v1.webp") center/cover no-repeat}
+.bg:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(4,11,8,.55),rgba(4,11,8,.92) 70%)}
+.card{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:38px 34px 30px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 30px 80px rgba(0,0,0,.45);animation:in .6s cubic-bezier(.2,.7,.2,1) both}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:34px}
+.logo img{width:34px;height:34px;object-fit:contain}
+.logo b{display:block;font-family:Sora,Manrope,sans-serif;letter-spacing:.22em;font-size:15px}
+.logo b span{color:var(--goldl)}
+.logo small{display:block;font-size:10px;letter-spacing:.2em;color:var(--muted);margin-top:2px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;color:var(--goldl);text-transform:uppercase;margin-bottom:10px}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-size:clamp(30px,8vw,38px);line-height:1.04;letter-spacing:-.03em;margin-bottom:12px}
+p.lead{color:var(--muted);font-size:15.5px;line-height:1.6;margin-bottom:24px}
+p.lead b{color:var(--cream)}
+.steps{list-style:none;counter-reset:s;margin:0 0 24px}
+.steps li{counter-increment:s;position:relative;padding:0 0 14px 40px;color:var(--muted);font-size:15px;line-height:1.5}
+.steps li:before{content:counter(s);position:absolute;left:0;top:-2px;width:27px;height:27px;border-radius:50%;border:1px solid rgba(231,207,158,.45);color:var(--goldl);font-weight:700;font-size:13px;display:grid;place-items:center}
+.steps li b{color:var(--cream)}
+label{display:block;font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--muted);margin:0 0 8px;text-transform:uppercase}
+.field{position:relative;margin-bottom:16px}
+input{width:100%;height:54px;border-radius:15px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--cream);font:500 16px Manrope,sans-serif;padding:0 16px;outline:none;transition:border-color .2s,background .2s}
+input:focus{border-color:rgba(231,207,158,.6);background:rgba(255,255,255,.07)}
+input[readonly]{opacity:.75}
+.eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);font:600 12px Manrope,sans-serif;cursor:pointer;padding:8px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:56px;border:0;border-radius:16px;background:linear-gradient(135deg,#d9bd84,#f0dcae);color:#13100a;font:700 15.5px Manrope,sans-serif;letter-spacing:.02em;cursor:pointer;text-decoration:none;transition:transform .15s,filter .2s;margin-top:6px}
+.btn:hover{filter:brightness(1.05)}.btn:active{transform:scale(.99)}
+.btn[disabled]{opacity:.6;cursor:wait}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--cream)}
+.msg{font-size:14px;line-height:1.5;margin-top:14px;min-height:1px}
+.msg.err{color:var(--err)}.msg.ok{color:var(--ok)}
+.hint{font-size:13px;color:var(--muted);margin:-6px 0 14px}
+.sep{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:22px 0 18px}
+.sep:before,.sep:after{content:"";flex:1;height:1px;background:var(--line)}
+.foot{margin-top:26px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.6}
+.foot a{color:var(--goldl)}
+.check{width:64px;height:64px;border-radius:50%;background:rgba(159,224,180,.12);border:1px solid rgba(159,224,180,.4);display:grid;place-items:center;margin-bottom:20px;color:var(--ok);font-size:30px}
+.spin{width:30px;height:30px;border:3px solid rgba(231,207,158,.2);border-top-color:var(--goldl);border-radius:50%;animation:sp 0.8s linear infinite;margin:10px 0 20px}
+@keyframes sp{to{transform:rotate(360deg)}}
+[hidden]{display:none!important}
+@media(max-width:420px){.card{padding:30px 22px 24px;border-radius:24px}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<main class="card">
+  <div class="logo"><img src="https://lowlab.maurobondanca.chatgpt.site/assets/lowlab-symbol-ui.png" alt="" onerror="this.style.display='none'"><div><b>LOW<span>LAB</span></b><small>UNIVERSIDADE DIGITAL</small></div></div>
+
+  <!-- 1. Chegou da Cakto / sem link -->
+  <section id="vBoasVindas" hidden>
+    <div class="eyebrow">Pagamento aprovado</div>
+    <h1>Bem-vindo à LowLab.</h1>
+    <p class="lead">Seu acesso está sendo liberado. Falta só <b>criar sua senha</b>:</p>
+    <ol class="steps">
+      <li>Abra o e-mail <b>"Seu acesso à LowLab está liberado"</b>, enviado por universidadelowlab@gmail.com. <b>Olhe também o Spam e Promoções.</b></li>
+      <li>Toque no botão <b>Criar minha senha</b>.</li>
+      <li>Pronto: entre no campus com seu e-mail e a senha nova.</li>
+    </ol>
+    <div class="sep">Não recebeu o e-mail?</div>
+    <form id="fPedir" novalidate>
+      <label for="emPedir">E-mail usado na compra</label>
+      <div class="field"><input id="emPedir" type="email" autocomplete="email" inputmode="email" placeholder="seuemail@gmail.com" required></div>
+      <button class="btn" id="bPedir" type="submit">Enviar link para criar minha senha</button>
+      <div class="msg" id="mPedir"></div>
+    </form>
+    <a class="btn ghost" style="margin-top:12px" href="https://lowlab.maurobondanca.chatgpt.site/">Já tenho senha. Entrar</a>
+  </section>
+
+  <!-- 2. Validando link -->
+  <section id="vValidando" hidden>
+    <div class="spin"></div>
+    <h1>Abrindo seu acesso…</h1>
+    <p class="lead">Só um instante.</p>
+  </section>
+
+  <!-- 3. Criar senha -->
+  <section id="vSenha" hidden>
+    <div class="eyebrow" id="sEyebrow">Último passo</div>
+    <h1 id="sTitulo">Crie sua senha.</h1>
+    <p class="lead" id="sLead">É com ela que você vai entrar no campus sempre que quiser.</p>
+    <form id="fSenha" novalidate>
+      <label for="emConta">Seu e-mail de acesso</label>
+      <div class="field"><input id="emConta" type="email" readonly autocomplete="username"></div>
+      <label for="pw1">Crie uma senha</label>
+      <div class="field"><input id="pw1" type="password" autocomplete="new-password" minlength="8" required placeholder="Mínimo de 8 caracteres"><button class="eye" type="button" data-eye="pw1">Mostrar</button></div>
+      <label for="pw2">Repita a senha</label>
+      <div class="field"><input id="pw2" type="password" autocomplete="new-password" minlength="8" required placeholder="Digite a mesma senha"><button class="eye" type="button" data-eye="pw2">Mostrar</button></div>
+      <button class="btn" id="bSenha" type="submit">Salvar senha e continuar</button>
+      <div class="msg" id="mSenha"></div>
+    </form>
+  </section>
+
+  <!-- 4. Pronto -->
+  <section id="vPronto" hidden>
+    <div class="check">✓</div>
+    <h1>Senha criada!</h1>
+    <p class="lead">Agora é só entrar no campus com <b id="prEmail"></b> e a senha que você acabou de criar.</p>
+    <a class="btn" href="https://lowlab.maurobondanca.chatgpt.site/">Entrar no campus</a>
+  </section>
+
+  <!-- 5. Link vencido -->
+  <section id="vVencido" hidden>
+    <div class="eyebrow" style="color:var(--err)">Link expirado</div>
+    <h1>Esse link não vale mais.</h1>
+    <p class="lead">Por segurança, cada link funciona uma vez só e vence depois de um tempo. Peça um novo abaixo, leva menos de 1 minuto.</p>
+    <form id="fPedir2" novalidate>
+      <label for="emPedir2">E-mail usado na compra</label>
+      <div class="field"><input id="emPedir2" type="email" autocomplete="email" inputmode="email" placeholder="seuemail@gmail.com" required></div>
+      <button class="btn" id="bPedir2" type="submit">Enviar novo link</button>
+      <div class="msg" id="mPedir2"></div>
+    </form>
+  </section>
+
+  <p class="foot">Precisa de ajuda? <a href="mailto:universidadelowlab@gmail.com">universidadelowlab@gmail.com</a></p>
+</main>
+
+<script src="https://lowlab.maurobondanca.chatgpt.site/auth-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  var APP = "https://lowlab.maurobondanca.chatgpt.site/";
+  var ESTA = location.origin + location.pathname;
+  var $ = function(id){ return document.getElementById(id); };
+  var views = ["vBoasVindas","vValidando","vSenha","vPronto","vVencido"];
+  function show(v){ views.forEach(function(x){ $(x).hidden = (x !== v); }); }
+  function msg(el, txt, kind){ el.textContent = txt || ""; el.className = "msg" + (kind ? " " + kind : ""); }
+
+  function traduz(e){
+    var m = (e && (e.message || e.msg || e.error_description)) || String(e || "");
+    if (/rate limit|only request this after|security purposes/i.test(m)) return "Muitas tentativas seguidas. Espere 1 minuto e tente de novo.";
+    if (/different from the old/i.test(m)) return "Essa já é a sua senha atual. Escolha uma diferente.";
+    var n = m.match(/at least (\d+) char/i); if (n) return "A senha precisa ter pelo menos " + n[1] + " caracteres.";
+    if (/weak|pwned|known to be/i.test(m)) return "Essa senha é muito fácil de adivinhar. Misture letras, números e símbolos.";
+    if (/expired|invalid|not found/i.test(m)) return "Esse link expirou ou já foi usado.";
+    if (/network|fetch/i.test(m)) return "Sem conexão. Verifique sua internet e tente de novo.";
+    return "Algo deu errado. Tente de novo ou fale com a gente pelo e-mail abaixo.";
+  }
+
+  document.querySelectorAll("[data-eye]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var i = $(b.getAttribute("data-eye")); var vis = i.type === "password";
+      i.type = vis ? "text" : "password"; b.textContent = vis ? "Ocultar" : "Mostrar";
+    });
+  });
+
+  var cfg = window.LOWLAB_SUPABASE || {};
+  if (!window.supabase || !cfg.url || !cfg.anonKey) {
+    show("vBoasVindas");
+    msg($("mPedir"), "Não foi possível carregar agora. Atualize a página em alguns segundos.", "err");
+    return;
+  }
+  var sb = window.supabase.createClient(cfg.url, cfg.anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, flowType: "implicit" }
+  });
+
+  // limpa os dados do link da barra de endereço (não ficam no histórico)
+  var qs = new URLSearchParams(location.search);
+  var hs = new URLSearchParams(location.hash.replace(/^#/, ""));
+  var th = qs.get("token_hash"), tipo = qs.get("type") || "recovery";
+  var at = hs.get("access_token"), rt = hs.get("refresh_token");
+  var erroLink = qs.get("error_code") || hs.get("error_code");
+  var emailDica = qs.get("email") || "";
+  if (location.search || location.hash) history.replaceState(null, "", ESTA);
+
+  function pedirLink(form, input, btn, out){
+    if (emailDica) input.value = emailDica;
+    form.addEventListener("submit", async function(ev){
+      ev.preventDefault();
+      var email = input.value.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg(out, "Digite um e-mail válido.", "err"); input.focus(); return; }
+      btn.disabled = true; btn.textContent = "Enviando…"; msg(out, "");
+      var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: ESTA });
+      btn.disabled = false; btn.textContent = "Enviar de novo";
+      if (r.error) { msg(out, traduz(r.error), "err"); return; }
+      msg(out, "Pronto! Se " + email + " tiver uma compra aprovada, o link chega em até 2 minutos. Olhe também o Spam e Promoções.", "ok");
+    });
+  }
+  pedirLink($("fPedir"), $("emPedir"), $("bPedir"), $("mPedir"));
+  pedirLink($("fPedir2"), $("emPedir2"), $("bPedir2"), $("mPedir2"));
+
+  var contaEmail = "";
+  function telaSenha(user, novo){
+    contaEmail = (user && user.email) || "";
+    $("emConta").value = contaEmail;
+    if (!novo) {
+      $("sEyebrow").textContent = "Nova senha";
+      $("sTitulo").textContent = "Crie sua nova senha.";
+      $("sLead").textContent = "Escolha uma senha nova para entrar no campus.";
+    }
+    show("vSenha");
+    setTimeout(function(){ $("pw1").focus(); }, 200);
+  }
+
+  $("fSenha").addEventListener("submit", async function(ev){
+    ev.preventDefault();
+    var p1 = $("pw1").value, p2 = $("pw2").value, out = $("mSenha"), b = $("bSenha");
+    if (p1.length < 8) { msg(out, "A senha precisa ter pelo menos 8 caracteres.", "err"); $("pw1").focus(); return; }
+    if (p1 !== p2) { msg(out, "As duas senhas não estão iguais.", "err"); $("pw2").focus(); return; }
+    b.disabled = true; b.textContent = "Salvando…"; msg(out, "");
+    var r = await sb.auth.updateUser({ password: p1 });
+    b.disabled = false; b.textContent = "Salvar senha e continuar";
+    if (r.error) {
+      if (/session|jwt|expired/i.test(r.error.message || "")) { show("vVencido"); $("emPedir2").value = contaEmail; return; }
+      msg(out, traduz(r.error), "err"); return;
+    }
+    $("prEmail").textContent = contaEmail || "seu e-mail";
+    show("vPronto");
+    try { await sb.auth.signOut({ scope: "local" }); } catch (e) {}
+  });
+
+  (async function iniciar(){
+    if (erroLink) { show("vVencido"); return; }
+    if (th) {
+      show("vValidando");
+      var r = await sb.auth.verifyOtp({ token_hash: th, type: tipo });
+      if (r.error || !r.data || !r.data.session) { show("vVencido"); return; }
+      telaSenha(r.data.user, tipo === "invite" || tipo === "signup");
+      return;
+    }
+    if (at && rt) {
+      show("vValidando");
+      var s = await sb.auth.setSession({ access_token: at, refresh_token: rt });
+      if (s.error || !s.data.session) { show("vVencido"); return; }
+      telaSenha(s.data.user, hs.get("type") === "invite");
+      return;
+    }
+    show("vBoasVindas");
+  })();
+})();
+</script>
+</body>
+</html>
