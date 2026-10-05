@@ -109,6 +109,11 @@ input[readonly]{opacity:.75}
     <h1>Senha criada!</h1>
     <p class="lead">Agora é só entrar no campus com <b id="prEmail"></b> e a senha que você acabou de criar.</p>
     <a class="btn" href="https://lowlab.maurobondanca.chatgpt.site/">Entrar no campus</a>
+    <div id="circuloBox" hidden style="margin-top:22px;border:1.5px solid rgba(231,207,158,.4);border-radius:20px;padding:22px 22px 18px;background:rgba(231,207,158,.06)">
+      <div class="eyebrow">Você é do Círculo 1%</div>
+      <p class="lead" id="circuloTxt" style="margin-bottom:14px">Último passo: entre na comunidade no WhatsApp. Sua entrada é aprovada pela equipe em até 24 horas.</p>
+      <a class="btn" id="circuloBtn" href="#" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#1fa855,#2fd06a);color:#04140a">Entrar no Círculo 1% no WhatsApp</a>
+    </div>
   </section>
 
   <!-- 5. Link vencido -->
@@ -132,6 +137,8 @@ input[readonly]{opacity:.75}
 <script>
 (function(){
   var APP = "https://lowlab.maurobondanca.chatgpt.site/";
+  // Link de convite da Comunidade Círculo 1% no WhatsApp. Vazio = ainda não liberado.
+  var CIRCULO_LINK = "";
   var ESTA = location.origin + location.pathname;
   var $ = function(id){ return document.getElementById(id); };
   var views = ["vBoasVindas","vValidando","vSenha","vPronto","vVencido"];
@@ -191,9 +198,10 @@ input[readonly]{opacity:.75}
   pedirLink($("fPedir"), $("emPedir"), $("bPedir"), $("mPedir"));
   pedirLink($("fPedir2"), $("emPedir2"), $("bPedir2"), $("mPedir2"));
 
-  var contaEmail = "";
+  var contaEmail = "", contaId = "";
   function telaSenha(user, novo){
     contaEmail = (user && user.email) || "";
+    contaId = (user && user.id) || "";
     $("emConta").value = contaEmail;
     if (!novo) {
       $("sEyebrow").textContent = "Nova senha";
@@ -217,6 +225,17 @@ input[readonly]{opacity:.75}
       msg(out, traduz(r.error), "err"); return;
     }
     $("prEmail").textContent = contaEmail || "seu e-mail";
+    try {
+      var pr = await sb.from("profiles").select("plan,status").eq("id", contaId).maybeSingle();
+      if (pr.data && pr.data.plan === "circulo" && pr.data.status === "active") {
+        $("circuloBox").hidden = false;
+        if (CIRCULO_LINK) { $("circuloBtn").href = CIRCULO_LINK; }
+        else {
+          $("circuloBtn").hidden = true;
+          $("circuloTxt").textContent = "Você também faz parte do Círculo 1%. O convite para a comunidade no WhatsApp chega pelo seu e-mail em breve.";
+        }
+      }
+    } catch (e) {}
     show("vPronto");
     try { await sb.auth.signOut({ scope: "local" }); } catch (e) {}
   });
