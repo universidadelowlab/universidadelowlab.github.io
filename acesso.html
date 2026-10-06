@@ -6,14 +6,14 @@
 <title>Seu acesso | LowLab</title>
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
-<link rel="icon" href="https://lowlab.maurobondanca.chatgpt.site/assets/lowlab-symbol-ui.png">
+<link rel="icon" href="/campus/assets/lowlab-symbol-ui.png">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#040b08;--card:rgba(8,20,15,.86);--cream:#f7f0e4;--gold:#c9a96e;--goldl:#e7cf9e;--muted:rgba(247,240,228,.66);--line:rgba(255,248,234,.13);--err:#ff9c8a;--ok:#9fe0b4}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
 body{background:var(--bg);color:var(--cream);font-family:Manrope,system-ui,sans-serif;-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center;padding:28px 16px;min-height:100vh;position:relative;overflow-x:hidden}
-.bg{position:fixed;inset:0;z-index:-1;background:#06110c url("https://lowlab.maurobondanca.chatgpt.site/assets/university-campus-hero-v1.webp") center/cover no-repeat}
+.bg{position:fixed;inset:0;z-index:-1;background:#06110c url("/campus/assets/university-campus-hero-v1.webp") center/cover no-repeat}
 .bg:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(4,11,8,.55),rgba(4,11,8,.92) 70%)}
 .card{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:38px 34px 30px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 30px 80px rgba(0,0,0,.45);animation:in .6s cubic-bezier(.2,.7,.2,1) both}
 @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -57,7 +57,7 @@ input[readonly]{opacity:.75}
 <body>
 <div class="bg"></div>
 <main class="card">
-  <div class="logo"><img src="https://lowlab.maurobondanca.chatgpt.site/assets/lowlab-symbol-ui.png" alt="" onerror="this.style.display='none'"><div><b>LOW<span>LAB</span></b><small>UNIVERSIDADE DIGITAL</small></div></div>
+  <div class="logo"><img src="/campus/assets/lowlab-symbol-ui.png" alt="" onerror="this.style.display='none'"><div><b>LOW<span>LAB</span></b><small>UNIVERSIDADE DIGITAL</small></div></div>
 
   <!-- 1. Chegou da Cakto / sem link -->
   <section id="vBoasVindas" hidden>
@@ -76,7 +76,7 @@ input[readonly]{opacity:.75}
       <button class="btn" id="bPedir" type="submit">Enviar link para criar minha senha</button>
       <div class="msg" id="mPedir"></div>
     </form>
-    <a class="btn ghost" style="margin-top:12px" href="https://lowlab.maurobondanca.chatgpt.site/">Já tenho senha. Entrar</a>
+    <a class="btn ghost" style="margin-top:12px" href="/campus/">Já tenho senha. Entrar</a>
   </section>
 
   <!-- 2. Validando link -->
@@ -108,7 +108,7 @@ input[readonly]{opacity:.75}
     <div class="check">✓</div>
     <h1>Senha criada!</h1>
     <p class="lead">Agora é só entrar no campus com <b id="prEmail"></b> e a senha que você acabou de criar.</p>
-    <a class="btn" href="https://lowlab.maurobondanca.chatgpt.site/">Entrar no campus</a>
+    <a class="btn" href="/campus/">Entrar no campus</a>
     <div id="circuloBox" hidden style="margin-top:22px;border:1.5px solid rgba(231,207,158,.4);border-radius:20px;padding:22px 22px 18px;background:rgba(231,207,158,.06)">
       <div class="eyebrow">Você é do Círculo 1%</div>
       <p class="lead" id="circuloTxt" style="margin-bottom:14px">Último passo: entre na comunidade no WhatsApp. Sua entrada é aprovada pela equipe em até 24 horas.</p>
@@ -132,11 +132,11 @@ input[readonly]{opacity:.75}
   <p class="foot">Precisa de ajuda? <a href="mailto:universidadelowlab@gmail.com">universidadelowlab@gmail.com</a></p>
 </main>
 
-<script src="https://lowlab.maurobondanca.chatgpt.site/auth-config.js"></script>
+<script src="/campus/auth-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
-  var APP = "https://lowlab.maurobondanca.chatgpt.site/";
+  var APP = "/campus/";
   // Link de convite da Comunidade Círculo 1% no WhatsApp. Vazio = ainda não liberado.
   var CIRCULO_LINK = "https://chat.whatsapp.com/FxvyTNJXaKaCfiFLHBbQQ7";
   var ESTA = location.origin + location.pathname;
