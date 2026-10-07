@@ -107,8 +107,9 @@ input[readonly]{opacity:.75}
   <section id="vPronto" hidden>
     <div class="check">✓</div>
     <h1>Senha criada!</h1>
-    <p class="lead">Agora é só entrar no campus com <b id="prEmail"></b> e a senha que você acabou de criar.</p>
-    <a class="btn" href="/campus/">Entrar no campus</a>
+    <p class="lead">Agora é só entrar <span id="prOnde">no campus</span> com <b id="prEmail"></b> e a senha que você acabou de criar.</p>
+    <a class="btn" id="bEntrarFinal" href="/campus/">Entrar no campus</a>
+    <a class="btn ghost" id="bParceirosFinal" href="/parceiros/" style="margin-top:12px" hidden>Entrar na Área de Parceiros</a>
     <div id="circuloBox" hidden style="margin-top:22px;border:1.5px solid rgba(231,207,158,.4);border-radius:20px;padding:22px 22px 18px;background:rgba(231,207,158,.06)">
       <div class="eyebrow">Você é do Círculo 1%</div>
       <p class="lead" id="circuloTxt" style="margin-bottom:14px">Último passo: entre na comunidade no WhatsApp. Sua entrada é aprovada pela equipe em até 24 horas.</p>
@@ -227,6 +228,16 @@ input[readonly]{opacity:.75}
     $("prEmail").textContent = contaEmail || "seu e-mail";
     try {
       var pr = await sb.from("profiles").select("plan,status").eq("id", contaId).maybeSingle();
+      var af = await sb.from("affiliates").select("status").eq("user_id", contaId).maybeSingle();
+      if (af.data && af.data.status === "active") {
+        if (pr.data && pr.data.plan === "demo") {
+          $("prOnde").textContent = "na Área de Parceiros";
+          $("bEntrarFinal").textContent = "Entrar na Área de Parceiros";
+          $("bEntrarFinal").href = "/parceiros/";
+        } else {
+          $("bParceirosFinal").hidden = false;
+        }
+      }
       if (pr.data && pr.data.plan === "circulo" && pr.data.status === "active") {
         $("circuloBox").hidden = false;
         if (CIRCULO_LINK) { $("circuloBtn").href = CIRCULO_LINK; }

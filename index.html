@@ -663,6 +663,32 @@ if(matchMedia('(hover:hover) and (pointer:fine)').matches&&!reduce){
     el.addEventListener('pointerleave',()=>{el.style.transform=''});
   });
 }
+
+// página de parceiro (/p/apelido): troca os botões de compra pelos links de afiliado dele
+(function(){
+  const a=(new URLSearchParams(location.search).get('a')||'').toLowerCase();
+  if(!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(a))return;
+  const s=document.createElement('script');s.src='/campus/auth-config.js';
+  s.onload=async()=>{
+    const c=window.LOWLAB_SUPABASE||{};let row=null;
+    try{
+      const r=await fetch(c.url+'/rest/v1/rpc/get_affiliate_page',{method:'POST',headers:{'content-type':'application/json',apikey:c.anonKey,authorization:'Bearer '+c.anonKey},body:JSON.stringify({p_slug:a})});
+      row=r.ok?(await r.json())[0]:null;
+    }catch(e){}
+    const ok=u=>typeof u==='string'&&/^https:\/\/pay\.cakto\.com\.br\/[^\s"'<>]+$/.test(u);
+    if(!row||(!ok(row.link_campus)&&!ok(row.link_circulo))){history.replaceState(null,'','/'+location.hash);return;}
+    const links={campus:row.link_campus,circulo:row.link_circulo};
+    document.querySelectorAll('a[data-plan]').forEach(el=>{
+      const u=links[el.dataset.plan];
+      if(ok(u))el.href=u;else{const p=el.closest('.plan');if(p)p.style.display='none';}
+    });
+    if(row.display_name){
+      const g=document.querySelector('#planos .wrap');
+      if(g){const n=document.createElement('p');n.style.cssText='text-align:center;color:var(--muted);font-size:14px;margin:0 0 18px';n.textContent='Você chegou por indicação de '+row.display_name+'.';g.prepend(n);}
+    }
+  };
+  document.head.appendChild(s);
+})();
 </script>
 </body>
 </html>

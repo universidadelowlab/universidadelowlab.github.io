@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Página não encontrada | LowLab</title>
+<meta name="robots" content="noindex">
+<script>
+  // Página de parceiro: /p/apelido → landing com os links de afiliado dele
+  (function () {
+    var m = location.pathname.toLowerCase().match(/^\/p\/([a-z0-9][a-z0-9-]{1,28}[a-z0-9])\/?$/);
+    if (m) location.replace("/?a=" + m[1] + location.hash);
+  })();
+</script>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#040b08;color:#f7f0e4;font-family:Manrope,system-ui,sans-serif;text-align:center;padding:24px}
+  h1{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:34px;margin:0 0 10px}
+  p{color:rgba(247,240,228,.64);margin:0 0 22px}
+  a{display:inline-block;padding:13px 20px;border-radius:14px;background:linear-gradient(135deg,#e7cf9e,#c7a66a 55%,#a7803f);color:#1b1307;font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+  <main>
+    <h1>Página não encontrada.</h1>
+    <p>O endereço pode ter mudado ou não existe mais.</p>
+    <a href="/">Ir para a LowLab</a>
+  </main>
+</body>
+</html>
