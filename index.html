@@ -682,6 +682,8 @@ if(matchMedia('(hover:hover) and (pointer:fine)').matches&&!reduce){
       const u=links[el.dataset.plan];
       if(ok(u))el.href=u;else{const p=el.closest('.plan');if(p)p.style.display='none';}
     });
+    const grade=document.querySelector('.plans');
+    if(grade&&!(ok(row.link_campus)&&ok(row.link_circulo)))grade.style.gridTemplateColumns='minmax(0,500px)',grade.style.justifyContent='center';
     if(row.display_name){
       const g=document.querySelector('#planos .wrap');
       if(g){const n=document.createElement('p');n.style.cssText='text-align:center;color:var(--muted);font-size:14px;margin:0 0 18px';n.textContent='Você chegou por indicação de '+row.display_name+'.';g.prepend(n);}
