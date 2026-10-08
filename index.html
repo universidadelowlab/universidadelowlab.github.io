@@ -228,8 +228,8 @@ footer a:hover{color:var(--cream)}
 .case{display:flex;flex-direction:column;gap:20px}
 .case-hl{border-color:rgba(213,189,145,.38);background:linear-gradient(180deg,rgba(213,189,145,.08),rgba(22,51,40,.3))}
 .case-top{display:flex;align-items:center;gap:14px}
-.case-top .av{width:52px;height:52px;font-size:16px;letter-spacing:.02em}
-.case-hl .case-top .av{background:linear-gradient(135deg,#f0dcb0,#a87d3e);color:#1d1408}
+.case-photo{width:64px;height:64px;flex:none;border-radius:50%;object-fit:cover;border:2px solid rgba(213,189,145,.4);background:var(--forest3)}
+.case-hl .case-photo{border-color:#d5bd91}
 .case-name{display:block;font-size:22px;font-weight:700;line-height:1.15}
 .case-top small{color:var(--muted);font-size:13px}
 .case-ig{margin-left:auto;font-family:var(--nav);font-size:12px;color:var(--goldl);border:1px solid rgba(213,189,145,.35);padding:7px 12px;border-radius:999px;white-space:nowrap;transition:background .2s}
@@ -239,9 +239,9 @@ footer a:hover{color:var(--cream)}
 .case p{color:var(--muted);font-size:15px;line-height:1.6}
 .facts{display:flex;flex-wrap:wrap;gap:8px}
 .facts span{font-size:13px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.2)}
-.case p.note{margin-top:auto;font-size:12px;color:var(--dim)}
+.case-stats{display:flex;flex-direction:column;gap:18px}
 @media(max-width:980px){.cases{grid-template-columns:1fr;max-width:620px}}
-@media(max-width:700px){.case-top{flex-wrap:wrap}.case-ig{margin-left:66px}.case-num b{font-size:44px}}
+@media(max-width:700px){.case-top{flex-wrap:wrap}.case-ig{margin-left:78px}.case-num b{font-size:44px}}
 
 /* RESPONSIVO */
 @media(max-width:980px){
@@ -493,11 +493,11 @@ h1.word{display:flex;justify-content:center;perspective:800px}
       <div style="display:flex;justify-content:space-between;align-items:center"><span class="eyebrow">Ranking do mês</span><span class="live">SÓ VITALÍCIO</span></div>
       <h3 class="disp" style="font-size:24px;font-weight:700;margin:14px 0 4px">Quem mais vendeu no tráfego</h3>
       <p style="color:var(--dim);font-size:13px">Vendas comprovadas pelo painel do checkout. Participam os membros do plano Vitalício.</p>
-      <div class="row g"><span class="pos">1</span><span class="av">RM</span><span>Rafael M.<span class="tag-live">LIVE</span></span><span class="val">412 vendas</span></div>
-      <div class="row s"><span class="pos">2</span><span class="av">JP</span><span>Juliana P.<span class="tag-live">LIVE</span></span><span class="val">356 vendas</span></div>
-      <div class="row b"><span class="pos">3</span><span class="av">TS</span><span>Thiago S.<span class="tag-live">LIVE</span></span><span class="val">298 vendas</span></div>
-      <div class="row"><span class="pos">4</span><span class="av">AC</span><span>Ana C.</span><span class="val" style="color:var(--dim)">241 vendas</span></div>
-      <p class="note">Nomes e números ilustrativos. O Top 3 de cada mês tem as campanhas analisadas em live no grupo do Vitalício.</p>
+      <div class="row g"><span class="pos">1</span><img class="av" src="foto-bruno.webp" alt="" width="34" height="34" loading="lazy" decoding="async" style="object-fit:cover"><span>Bruno R.<span class="tag-live">LIVE</span></span><span class="val">894 vendas</span></div>
+      <div class="row s"><span class="pos">2</span><span class="av" style="color:var(--dim)">?</span><span style="color:var(--dim)">Vaga aberta</span><span class="val" style="color:var(--dim)">—</span></div>
+      <div class="row b"><span class="pos">3</span><span class="av" style="color:var(--dim)">?</span><span style="color:var(--dim)">Vaga aberta</span><span class="val" style="color:var(--dim)">—</span></div>
+      <div class="row"><span class="pos">4</span><span class="av" style="color:var(--dim)">?</span><span style="color:var(--dim)">Vaga aberta</span><span class="val" style="color:var(--dim)">—</span></div>
+      <p class="note">O Top 3 de cada mês tem as campanhas analisadas em live no grupo do Vitalício.</p>
     </div>
     <div class="panel">
       <span class="eyebrow">Exclusivo do plano Vitalício</span>
@@ -520,16 +520,15 @@ h1.word{display:flex;justify-content:center;perspective:800px}
   <div class="head reveal"><span class="eyebrow">◆ Resultados</span><h2 class="split">Quem está por trás<br><span class="gold">e quem já chegou lá.</span></h2><p>O fundador da LowLab e um aluno que hoje vive do próprio negócio digital.</p></div>
   <div class="cases reveal stagger">
     <article class="panel case">
-      <div class="case-top"><span class="av">LZ</span><div><b class="disp case-name">Lucas Manso Zafalon</b><small>Fundador da LowLab</small></div><a class="case-ig" href="https://www.instagram.com/mansozafalon/" target="_blank" rel="noopener">@mansozafalon ↗</a></div>
+      <div class="case-top"><img class="case-photo" src="foto-lucas.webp" alt="Lucas Manso Zafalon" width="64" height="64" loading="lazy" decoding="async"><div><b class="disp case-name">Lucas Manso Zafalon</b><small>Fundador da LowLab</small></div><a class="case-ig" href="https://www.instagram.com/mansozafalon/" target="_blank" rel="noopener">@mansozafalon ↗</a></div>
       <div class="case-num"><small>No digital há</small><b class="gold disp">+ 6 anos</b></div>
       <p>Trabalha no digital há mais de 6 anos, com vários projetos no ar e uma rede grande de contatos na área. A LowLab reúne o que ele aplica no dia a dia.</p>
       <div class="facts"><span>Vários projetos no ar</span><span>Networking na área</span><span>Está no Círculo com os alunos</span></div>
     </article>
     <article class="panel case case-hl">
-      <div class="case-top"><span class="av">BR</span><div><b class="disp case-name">Bruno Ramires</b><small>Aluno da LowLab</small></div><a class="case-ig" href="https://www.instagram.com/bruno.ramires_/" target="_blank" rel="noopener">@bruno.ramires_ ↗</a></div>
-      <div class="case-num"><small>Faturamento por mês</small><b class="gold disp">+ R$ 50 mil</b></div>
-      <p>Montou o próprio negócio digital vendendo low ticket e hoje vive dele.</p>
-      <p class="note">Resultado individual de faturamento (total vendido no mês), comprovado pelo painel de vendas. Depende de execução, tempo e investimento em anúncios; não é promessa de ganho.</p>
+      <div class="case-top"><img class="case-photo" src="foto-bruno.webp" alt="Bruno Ramires" width="64" height="64" loading="lazy" decoding="async"><div><b class="disp case-name">Bruno Ramires</b><small>Aluno da LowLab</small></div><a class="case-ig" href="https://www.instagram.com/bruno.ramires_/" target="_blank" rel="noopener">@bruno.ramires_ ↗</a></div>
+      <div class="case-stats"><div class="case-num"><small>Faturamento por mês</small><b class="gold disp">+ R$ 50 mil</b></div><div class="case-num"><small>Faturado desde que entrou na LowLab</small><b class="gold disp">+ R$ 1 milhão</b></div></div>
+      <p>Tudo isso só com produtos low ticket. Hoje ele vive do próprio negócio digital.</p>
     </article>
   </div>
 </div></section>
