@@ -9,8 +9,9 @@
   var APELIDO = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
   var RESERVADOS = ["admin", "lowlab", "parceiros", "campus", "acesso", "suporte", "oficial", "circulo"];
   var PLANOS = [
-    { id: "campus", nome: "LowLab Campus", preco: 297, campo: "link_campus" },
-    { id: "circulo", nome: "Campus + Círculo 1%", preco: 597, campo: "link_circulo" }
+    // o campo link_circulo guarda o link do plano Vitalício (nome mantido no banco)
+    { id: "campus", nome: "Mensal", preco: 297, periodo: "/mês", campo: "link_campus", ganho: "por mês, enquanto o aluno assinar" },
+    { id: "circulo", nome: "Vitalício", preco: 597, periodo: " (pagamento único)", campo: "link_circulo", ganho: "por venda" }
   ];
   var COMISSAO = 0.5;
 
@@ -198,8 +199,8 @@
     render(
       '<div class="page-head"><p class="eyebrow">Seu espaço de parceiro</p><h1>Seu próximo passo, ' + esc(primeiroNome()) + '<span class="dot">.</span></h1>' +
       '<p>Configure sua página, conheça o que você vende e comece a divulgar. A venda e a comissão aparecem no seu painel da Cakto.</p></div>' +
-      '<div class="hero"><div class="panel"><p class="eyebrow">Sua comissão</p><div class="big">50% <span class="gold-text">na primeira cobrança</span><small>' +
-      PLANOS.map(function (p) { return esc(p.nome) + ": " + brl(p.preco) + "/mês → você recebe " + brl(p.preco * COMISSAO); }).join("<br>") +
+      '<div class="hero"><div class="panel"><p class="eyebrow">Sua comissão</p><div class="big">50% <span class="gold-text">em cada pagamento</span><small>' +
+      PLANOS.map(function (p) { return esc(p.nome) + ": " + brl(p.preco) + p.periodo + " → você recebe " + brl(p.preco * COMISSAO) + " " + p.ganho; }).join("<br>") +
       '</small></div></div><div class="panel"><p class="eyebrow">Para suas lives</p><h3>Campus em demonstração</h3><p class="hint" style="font-size:14px;margin:6px 0 14px">Entre no campus com esta mesma conta para mostrar a plataforma. A primeira aula fica liberada para você apresentar.</p><a class="btn small" href="/campus/" target="_blank" rel="noopener">Abrir o campus ↗</a></div></div>' +
       '<div class="panel"><p class="eyebrow">Um passo de cada vez</p><div class="steps">' +
       passo(1, pronta, "Sua página e seus links", pronta ? "Página configurada. Seu endereço está pronto para divulgar." : "Escolha seu apelido e cole seus links de afiliado da Cakto.", '<a class="btn small" href="#pagina">' + (pronta ? "Ver página" : "Configurar") + "</a>") +
@@ -228,7 +229,7 @@
       '<div><label for="pSlug">Apelido do endereço</label><input id="pSlug" type="text" maxlength="30" value="' + esc(a.slug || "") + '" placeholder="ex.: ana-souza"><p class="hint">' + esc(SITE) + '/p/<b id="slugPrev">' + esc(a.slug || "seu-apelido") + "</b> · letras minúsculas, números e hífen</p></div></div>" +
       '<p class="eyebrow" style="margin-top:22px">Seus links de afiliado da Cakto</p><p class="hint" style="font-size:14px">Na Cakto: Produtos › Minhas Afiliações › escolha o produto › aba Links. Copie o link completo.</p>' +
       PLANOS.map(function (p) {
-        return '<label for="pl_' + p.id + '">' + esc(p.nome) + " · " + brl(p.preco) + "/mês</label>" +
+        return '<label for="pl_' + p.id + '">' + esc(p.nome) + " · " + brl(p.preco) + p.periodo + "</label>" +
           '<input id="pl_' + p.id + '" type="url" value="' + esc(a[p.campo] || "") + '" placeholder="https://pay.cakto.com.br/…">';
       }).join("") +
       '<button class="btn gold" id="bSalvarPagina" type="submit">Salvar minha página</button><p class="msg" id="mPagina" role="status"></p></form>'
@@ -373,7 +374,7 @@
       var pr = porId[x.user_id] || {};
       return "<tr><td><b>" + esc(pr.full_name || x.display_name || "—") + "</b><br><small>" + esc(pr.email || "") + "</small></td>" +
         "<td>" + (x.slug ? '<a href="/p/' + esc(x.slug) + '" target="_blank" rel="noopener">/p/' + esc(x.slug) + "</a>" : "<small>sem página</small>") + "</td>" +
-        "<td>" + (x.link_campus ? '<span class="badge ok">Campus</span> ' : "") + (x.link_circulo ? '<span class="badge ok">Círculo</span>' : "") + (!x.link_campus && !x.link_circulo ? "<small>nenhum</small>" : "") + "</td>" +
+        "<td>" + (x.link_campus ? '<span class="badge ok">Mensal</span> ' : "") + (x.link_circulo ? '<span class="badge ok">Vitalício</span>' : "") + (!x.link_campus && !x.link_circulo ? "<small>nenhum</small>" : "") + "</td>" +
         "<td><small>" + new Date(x.created_at).toLocaleDateString("pt-BR") + "</small></td>" +
         '<td><span class="badge ' + (x.status === "active" ? "ok" : "err") + '">' + (x.status === "active" ? "Ativo" : "Bloqueado") + "</span></td>" +
         '<td><button class="btn small ' + (x.status === "active" ? "danger" : "") + '" data-status="' + esc(x.user_id) + '" data-novo="' + (x.status === "active" ? "blocked" : "active") + '">' + (x.status === "active" ? "Bloquear" : "Reativar") + "</button></td></tr>";
