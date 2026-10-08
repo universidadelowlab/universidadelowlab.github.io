@@ -114,6 +114,7 @@ input[readonly]{opacity:.75}
       <div class="eyebrow">Você é do Círculo 1%</div>
       <p class="lead" id="circuloTxt" style="margin-bottom:14px">Último passo: entre na comunidade no WhatsApp. Sua entrada é aprovada pela equipe em até 24 horas.</p>
       <a class="btn" id="circuloBtn" href="#" target="_blank" rel="noopener" style="background:linear-gradient(135deg,#1fa855,#2fd06a);color:#04140a">Entrar no Círculo 1% no WhatsApp</a>
+      <p class="lead" id="vitalicioTxt" hidden style="margin:16px 0 0;font-size:14px">Você tem o plano Vitalício: a data e o link da call mensal em grupo chegam pelo seu e-mail.</p>
     </div>
   </section>
 
@@ -238,8 +239,10 @@ input[readonly]{opacity:.75}
           $("bParceirosFinal").hidden = false;
         }
       }
-      if (pr.data && pr.data.plan === "circulo" && pr.data.status === "active") {
+      // Desde 08/10/2026 o Círculo 1% faz parte de todos os planos pagos.
+      if (pr.data && ["campus", "circulo", "vitalicio"].indexOf(pr.data.plan) >= 0 && pr.data.status === "active") {
         $("circuloBox").hidden = false;
+        if (pr.data.plan === "vitalicio") { $("vitalicioTxt").hidden = false; }
         if (CIRCULO_LINK) { $("circuloBtn").href = CIRCULO_LINK; }
         else {
           $("circuloBtn").hidden = true;
