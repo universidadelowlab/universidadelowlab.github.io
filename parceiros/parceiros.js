@@ -10,8 +10,8 @@
   var RESERVADOS = ["admin", "lowlab", "parceiros", "campus", "acesso", "suporte", "oficial", "circulo"];
   var PLANOS = [
     // o campo link_circulo guarda o link do plano Vitalício (nome mantido no banco)
-    { id: "campus", nome: "Mensal", preco: 297, periodo: "/mês", campo: "link_campus", ganho: "por mês, enquanto o aluno assinar" },
-    { id: "circulo", nome: "Vitalício", preco: 597, periodo: " (pagamento único)", campo: "link_circulo", ganho: "por venda" }
+    { id: "campus", nome: "Mensal", preco: 297, periodo: "/mês", campo: "link_campus", ganho: "por mês, enquanto o aluno assinar", convite: "https://app.cakto.com.br/affiliate/invite/826bce51-e635-4962-9612-199ddb91c440" },
+    { id: "circulo", nome: "Vitalício", preco: 597, periodo: " (pagamento único)", campo: "link_circulo", ganho: "por venda", convite: "https://app.cakto.com.br/affiliate/invite/b5a0b23f-83ae-47c1-9930-88a39b47f107" }
   ];
   var COMISSAO = 0.5;
 
@@ -33,6 +33,19 @@
   function toast(txt) {
     var t = $("toast"); t.textContent = txt; t.hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 2600);
+  }
+  // lembretes do que o parceiro já fez neste navegador (só para guiar os passos)
+  function marca(k) { try { return localStorage.getItem("ll_parc_" + k) === "1"; } catch (e) { return false; } }
+  function marcar(k) { try { localStorage.setItem("ll_parc_" + k, "1"); } catch (e) {} }
+  function botoesConvite(classe) {
+    return PLANOS.map(function (p) {
+      return '<a class="btn small' + (classe || "") + '" href="' + esc(p.convite) + '" target="_blank" rel="noopener" data-convite="' + p.id + '">Afiliar ao ' + esc(p.nome) + " ↗</a>";
+    }).join("");
+  }
+  function ligarConvites() {
+    document.querySelectorAll("#conteudo [data-convite]").forEach(function (a) {
+      a.addEventListener("click", function () { marcar("conv_" + a.getAttribute("data-convite")); });
+    });
   }
   async function copiar(txt) {
     try { await navigator.clipboard.writeText(txt); toast("Copiado!"); }
@@ -184,6 +197,7 @@
     if (v === "admin" && st.profile.role !== "admin") v = "inicio";
     if (!st.aff && v !== "admin") v = "admin";
     document.querySelectorAll("[data-nav]").forEach(function (a) { a.classList.toggle("active", a.getAttribute("data-nav") === v); });
+    if ($("nbMaterial")) $("nbMaterial").hidden = v === "material" || marca("material");
     $("side").classList.remove("open");
     var f = { inicio: telaInicio, pagina: telaPagina, aulas: telaAulas, material: telaMaterial, conta: telaConta, admin: telaAdmin }[v] || telaInicio;
     f();
@@ -196,23 +210,41 @@
     var ativas = st.lessons.filter(function (x) { return x.active; });
     var feitas = ativas.filter(function (x) { return st.done.has(x.id); }).length;
     var pronta = paginaPronta();
+    var leu = marca("material");
+    var afiliou = pronta || PLANOS.every(function (p) { return marca("conv_" + p.id); });
     var aulasOk = ativas.length > 0 && feitas === ativas.length;
+    var feito = [leu, afiliou, pronta, aulasOk, false];
+    var agora = feito.indexOf(false);
+    var g = function (i) { return i === agora ? " gold" : ""; };
+    var passos = [
+      ["Leia o material de apoio", "Comece pela seção <b>Comece aqui</b>: como a parceria funciona, as regras e o passo a passo da afiliação.",
+        '<a class="btn small' + g(0) + '" href="#material">Abrir material</a>'],
+      ["Afilie-se aos dois planos na Cakto", "Crie sua conta na Cakto, se ainda não tiver, e peça a afiliação no Mensal e no Vitalício. A aprovação é automática.",
+        botoesConvite(g(1))],
+      ["Monte sua página e cole seus links", pronta ? "Página configurada. Seu endereço está pronto para divulgar." : "Na Cakto, em Produtos › Minhas Afiliações › Links, copie seus links. Depois escolha seu apelido e cole os links aqui.",
+        '<a class="btn small' + g(2) + '" href="#pagina">' + (pronta ? "Ver página" : "Configurar") + "</a>"],
+      ["Conheça o que você vende", ativas.length ? feitas + " de " + ativas.length + " aulas concluídas." : "As aulas em vídeo estão chegando. Até lá, a seção <b>Entenda o que você vende</b> do material explica tudo.",
+        ativas.length ? '<a class="btn small' + g(3) + '" href="#aulas">Ver aulas</a>' : '<a class="btn small' + g(3) + '" href="#material">Abrir material</a>'],
+      ["Divulgue sua página", pronta ? esc(linkPagina()) : "Disponível assim que sua página estiver configurada.",
+        pronta ? '<button class="btn small gold" data-copiar="' + esc(linkPagina()) + '">Copiar link</button>' : ""]
+    ];
     render(
       '<div class="page-head"><p class="eyebrow">Seu espaço de parceiro</p><h1>Seu próximo passo, ' + esc(primeiroNome()) + '<span class="dot">.</span></h1>' +
-      '<p>Configure sua página, conheça o que você vende e comece a divulgar. A venda e a comissão aparecem no seu painel da Cakto.</p></div>' +
-      '<div class="hero"><div class="panel"><p class="eyebrow">Sua comissão</p><div class="big">50% <span class="gold-text">em cada pagamento</span><small>' +
+      "<p>Siga os passos na ordem. A venda e a comissão aparecem no seu painel da Cakto.</p></div>" +
+      '<div class="destaque"><div><p class="eyebrow">Comece por aqui</p><h3>Material de apoio</h3><p>Regras, afiliação na Cakto, roteiro de live, ganchos de vídeo e mensagens prontas. Tudo o que você precisa para vender está lá, na ordem em que vai usar.</p></div>' +
+      '<a class="btn gold" href="#material">Abrir material de apoio</a></div>' +
+      '<div class="panel"><p class="eyebrow">Passo a passo</p><div class="steps">' +
+      passos.map(function (x, i) { return passo(i + 1, feito[i], x[0], x[1], x[2], i === agora); }).join("") +
+      "</div></div>" +
+      '<div class="hero" style="margin-top:18px"><div class="panel"><p class="eyebrow">Sua comissão</p><div class="big">50% <span class="gold-text">em cada pagamento</span><small>' +
       PLANOS.map(function (p) { return esc(p.nome) + ": " + brl(p.preco) + p.periodo + " → você recebe " + brl(p.preco * COMISSAO) + " " + p.ganho; }).join("<br>") +
-      '</small></div></div><div class="panel"><p class="eyebrow">Para suas lives</p><h3>Campus em demonstração</h3><p class="hint" style="font-size:14px;margin:6px 0 14px">Entre no campus com esta mesma conta para mostrar a plataforma. A primeira aula fica liberada para você apresentar.</p><a class="btn small" href="/campus/" target="_blank" rel="noopener">Abrir o campus ↗</a></div></div>' +
-      '<div class="panel"><p class="eyebrow">Um passo de cada vez</p><div class="steps">' +
-      passo(1, pronta, "Sua página e seus links", pronta ? "Página configurada. Seu endereço está pronto para divulgar." : "Escolha seu apelido e cole seus links de afiliado da Cakto.", '<a class="btn small" href="#pagina">' + (pronta ? "Ver página" : "Configurar") + "</a>") +
-      passo(2, aulasOk, "Conheça o que você vende", ativas.length ? feitas + " de " + ativas.length + " aulas concluídas." : "As aulas para parceiros estão chegando.", '<a class="btn small" href="#aulas">Ver aulas</a>') +
-      passo(3, false, "Divulgue sua página", pronta ? esc(linkPagina()) : "Disponível assim que sua página estiver configurada.", pronta ? '<button class="btn small gold" data-copiar="' + esc(linkPagina()) + '">Copiar link</button>' : "") +
-      "</div></div>"
+      '</small></div></div><div class="panel"><p class="eyebrow">Para suas lives</p><h3>Campus em demonstração</h3><p class="hint" style="font-size:14px;margin:6px 0 14px">Entre no campus com esta mesma conta para mostrar a plataforma. A primeira aula fica liberada para você apresentar.</p><a class="btn small" href="/campus/" target="_blank" rel="noopener">Abrir o campus ↗</a></div></div>'
     );
     ligarCopiar();
+    ligarConvites();
   }
-  function passo(n, feito, titulo, texto, acao) {
-    return '<div class="step' + (feito ? " done" : "") + '"><div class="num">' + (feito ? "✓" : "0" + n) + '</div><div><h3>' + esc(titulo) + "</h3><p>" + texto + "</p></div>" + (acao || "") + "</div>";
+  function passo(n, feito, titulo, texto, acao, agora) {
+    return '<div class="step' + (feito ? " done" : "") + (agora ? " now" : "") + '"><div class="num">' + (feito ? "✓" : "0" + n) + '</div><div><h3>' + esc(titulo) + (agora ? ' <span class="badge-now">Agora</span>' : "") + "</h3><p>" + texto + '</p></div><div class="step-acts">' + (acao || "") + "</div></div>";
   }
   function ligarCopiar() {
     document.querySelectorAll("[data-copiar]").forEach(function (b) { b.addEventListener("click", function () { copiar(b.getAttribute("data-copiar")); }); });
@@ -225,6 +257,11 @@
     render(
       '<div class="page-head"><p class="eyebrow">Pronta para divulgar</p><h1>Sua página de vendas<span class="dot">.</span></h1>' +
       "<p>É a página oficial da LowLab com os botões de compra apontando para os seus links de afiliado. Plano sem link salvo não aparece na sua página.</p></div>" +
+      '<div class="panel"><p class="eyebrow">Antes de colar os links</p><h3>Afilie-se aos dois planos na Cakto</h3>' +
+      '<ol class="guia"><li>Clique nos botões abaixo e peça a afiliação. Se ainda não tiver conta na Cakto, ela pede para você criar. A aprovação é automática.<span class="guia-acts">' + botoesConvite(paginaPronta() ? "" : " gold") + '</span></li>' +
+      '<li>Na Cakto, abra <b>Produtos › Minhas Afiliações</b>, escolha o produto e vá na aba <b>Links</b>.</li>' +
+      '<li>Copie o link completo de cada plano e cole no campo certo aqui embaixo, junto com seu apelido.</li></ol>' +
+      '<p class="hint" style="font-size:14px;margin:0">Dúvida? O passo a passo completo está no <a href="#material">material de apoio</a>, na seção Comece aqui.</p></div>' +
       (link ? '<div class="panel"><p class="eyebrow">Seu endereço para divulgar</p><div class="copy-row"><span>' + esc(link) + '</span><a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir ↗</a><button class="btn small gold" data-copiar="' + esc(link) + '">Copiar</button></div></div>' : "") +
       '<form class="panel" id="fPagina" novalidate><div class="grid2"><div><label for="pNome">Seu nome na página</label><input id="pNome" type="text" maxlength="60" value="' + esc(a.display_name || (st.profile && st.profile.full_name) || "") + '" placeholder="Ex.: Equipe Ana Souza"><p class="hint">Aparece discretamente na página como quem indicou.</p></div>' +
       '<div><label for="pSlug">Apelido do endereço</label><input id="pSlug" type="text" maxlength="30" value="' + esc(a.slug || "") + '" placeholder="ex.: ana-souza"><p class="hint">' + esc(SITE) + '/p/<b id="slugPrev">' + esc(a.slug || "seu-apelido") + "</b> · letras minúsculas, números e hífen</p></div></div>" +
@@ -236,6 +273,7 @@
       '<button class="btn gold" id="bSalvarPagina" type="submit">Salvar minha página</button><p class="msg" id="mPagina" role="status"></p></form>'
     );
     ligarCopiar();
+    ligarConvites();
     $("pSlug").addEventListener("input", function () {
       var v = $("pSlug").value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+/, "").slice(0, 30);
       $("pSlug").value = v; $("slugPrev").textContent = v || "seu-apelido";
@@ -406,6 +444,7 @@
     $("modalCorpo").querySelectorAll("[data-copiar]").forEach(function (b) { b.addEventListener("click", function () { copiar(b.getAttribute("data-copiar")); }); });
   }
   function telaMaterial() {
+    marcar("material");
     var ativos = st.materials.filter(function (x) { return x.active; });
     var regras = ativos.filter(function (m) { return m.kind === "text" && /^regras/i.test(m.title); })[0];
     var usadas = SECOES.filter(function (s) { return ativos.some(function (m) { return secaoDe(m) === s.id; }); });
