@@ -171,7 +171,8 @@
     st.lessons = (l.data || []).filter(function (x) { return x.active || st.profile.role === "admin"; });
     var d = await sb.from("affiliate_progress").select("lesson_id").eq("user_id", st.user.id);
     st.done = new Set((d.data || []).map(function (x) { return x.lesson_id; }));
-    var m = await sb.from("affiliate_materials").select("id,position,title,kind,body,url,active").order("position");
+    var m = await sb.from("affiliate_materials").select("id,position,title,kind,body,url,active,section,summary").order("position");
+    if (m.error) m = await sb.from("affiliate_materials").select("id,position,title,kind,body,url,active").order("position");
     st.materials = (m.data || []).filter(function (x) { return x.active || st.profile.role === "admin"; });
   }
 
@@ -313,19 +314,116 @@
   }
 
   // ---------- Material de apoio ----------
+  var SECOES = [
+    { id: "comece", titulo: "Comece aqui", desc: "Afilie-se, monte sua página e leia as regras antes de postar." },
+    { id: "entenda", titulo: "Entenda o que você vende", desc: "A LowLab, o case do Bruno e como responder às dúvidas." },
+    { id: "conteudo", titulo: "Crie conteúdo", desc: "Ganchos, bio, mensagens prontas e como fazer cortes." },
+    { id: "live", titulo: "Venda ao vivo", desc: "O roteiro completo da live." },
+    { id: "outros", titulo: "Mais materiais", desc: "" }
+  ];
+  var ICONE = {
+    text: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/></svg>',
+    link: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+    file: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>'
+  };
+  function secaoDe(m) { var s = m.section || "outros"; return SECOES.some(function (x) { return x.id === s; }) ? s : "outros"; }
+  function minutos(t) { var n = String(t || "").split(/\s+/).filter(Boolean).length; return Math.max(1, Math.round(n / 200)); }
+  function resumoDe(m) {
+    if (m.summary) return m.summary;
+    var l = String(m.body || "").split("\n").filter(function (x) { return x.trim() && !/:$/.test(x.trim()); })[0] || "";
+    l = l.replace(/^(•|\d+\.)\s+/, "");
+    return l.length > 120 ? l.slice(0, 117).trim() + "…" : l;
+  }
+  // [fmt-start] transforma o texto simples do material em leitura organizada
+  function fmtInline(t) {
+    return esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  }
+  function fmtRotulo(t) {
+    var m = t.match(/^([^:]{2,45}):\s+(.+)$/);
+    if (m && m[1].split(/\s+/).length <= 7 && !/[.!?"](?!\d)/.test(m[1]) && !/https?$/.test(m[1])) return "<b>" + fmtInline(m[1]) + ":</b> " + fmtInline(m[2]);
+    return fmtInline(t);
+  }
+  function fmtItem(t) {
+    var i = t.indexOf(" → ");
+    if (i > 0) return '<li class="obj"><b>' + fmtInline(t.slice(0, i)) + "</b><span>" + fmtInline(t.slice(i + 3)) + "</span></li>";
+    return "<li>" + fmtRotulo(t) + "</li>";
+  }
+  function fmtSnip(t) {
+    return '<div class="snip"><pre>' + esc(t) + '</pre><button class="btn small" type="button" data-copiar="' + esc(t) + '">Copiar</button></div>';
+  }
+  function formatar(body) {
+    var ehBullet = function (l) { return /^•\s/.test(l); }, ehNum = function (l) { return /^\d+\.\s/.test(l); };
+    var ehTitulo = function (l) { var x = l.trim(); return /:$/.test(x) && x.length <= 90 && !ehBullet(x) && !ehNum(x); };
+    var blocos = [], atual = [];
+    String(body || "").replace(/\r/g, "").split("\n").forEach(function (l) {
+      if (!l.trim()) { if (atual.length) blocos.push(atual); atual = []; } else atual.push(l);
+    });
+    if (atual.length) blocos.push(atual);
+    var html = "";
+    blocos.forEach(function (b) {
+      var j = 0;
+      while (j < b.length) {
+        var l = b[j];
+        if (ehTitulo(l)) {
+          var tit = l.trim().replace(/:$/, "");
+          html += '<h4 class="mat-h">' + fmtInline(tit) + "</h4>"; j++;
+          var resto = [];
+          while (j < b.length && !ehBullet(b[j]) && !ehNum(b[j]) && !ehTitulo(b[j])) { resto.push(b[j]); j++; }
+          if (resto.length) html += /exemplo/i.test(tit) ? resto.map(fmtSnip).join("") : fmtSnip(resto.join("\n"));
+          continue;
+        }
+        if (ehBullet(l) || ehNum(l)) {
+          var num = ehNum(l), itens = [];
+          while (j < b.length && (num ? ehNum(b[j]) : ehBullet(b[j]))) { itens.push(b[j].replace(/^(•|\d+\.)\s+/, "")); j++; }
+          html += (num ? '<ol class="mat-ol">' : '<ul class="mat-ul">') + itens.map(fmtItem).join("") + (num ? "</ol>" : "</ul>");
+          continue;
+        }
+        var ps = [];
+        while (j < b.length && !ehBullet(b[j]) && !ehNum(b[j]) && !ehTitulo(b[j])) { ps.push(b[j]); j++; }
+        html += "<p>" + ps.map(fmtRotulo).join("<br>") + "</p>";
+      }
+    });
+    return html;
+  }
+  // [fmt-end]
+  function linhaMaterial(m) {
+    var r = resumoDe(m), txt = '<span class="mat-txt"><b>' + esc(m.title) + "</b>" + (r ? "<small>" + esc(r) + "</small>" : "") + "</span>";
+    if (m.kind !== "text" && m.url) {
+      return '<a class="mat-row link" href="' + esc(m.url) + '" target="_blank" rel="noopener"><span class="mat-ico">' + (ICONE[m.kind] || ICONE.link) + "</span>" + txt +
+        '<span class="mat-go">' + (m.kind === "file" ? "Baixar" : "Abrir") + " ↗</span></a>";
+    }
+    return '<button class="mat-row" type="button" data-ler="' + esc(m.id) + '"><span class="mat-ico">' + ICONE.text + "</span>" + txt +
+      '<span class="mat-go"><em>' + minutos(m.body) + " min</em>Ler →</span></button>";
+  }
+  function lerMaterial(id) {
+    var m = st.materials.filter(function (x) { return x.id === id; })[0]; if (!m) return;
+    var s = SECOES.filter(function (x) { return x.id === secaoDe(m); })[0];
+    abrirModal(
+      '<div class="mat-doc"><p class="eyebrow">' + esc(s ? s.titulo : "Material de apoio") + '</p><h2 id="modalTitulo">' + esc(m.title) + "</h2>" +
+      '<div class="mat-top"><span>' + minutos(m.body) + ' min de leitura</span><button class="btn small gold" type="button" data-copiar="' + esc(m.body || "") + '">Copiar tudo</button></div>' +
+      formatar(m.body) + "</div>"
+    );
+    $("modalCorpo").querySelectorAll("[data-copiar]").forEach(function (b) { b.addEventListener("click", function () { copiar(b.getAttribute("data-copiar")); }); });
+  }
   function telaMaterial() {
     var ativos = st.materials.filter(function (x) { return x.active; });
+    var regras = ativos.filter(function (m) { return m.kind === "text" && /^regras/i.test(m.title); })[0];
+    var usadas = SECOES.filter(function (s) { return ativos.some(function (m) { return secaoDe(m) === s.id; }); });
     render(
-      '<div class="page-head"><p class="eyebrow">Para colocar em prática</p><h1>Material de apoio<span class="dot">.</span></h1><p>Links, criativos e textos prontos para você divulgar a LowLab do jeito certo.</p></div>' +
-      '<div class="panel" style="margin-bottom:16px"><p class="eyebrow">Regras de divulgação</p><p style="margin:0;color:var(--muted)">Pode: mostrar a plataforma, contar a sua experiência, usar os criativos e textos daqui. Não pode: prometer ganho ou resultado, mostrar print de venda que não é seu ou que foi alterado, usar o nome LowLab em perfil, página ou domínio próprio, nem fazer spam. Quem descumprir é bloqueado.</p></div>' +
-      (ativos.length ? '<div class="materials">' + ativos.map(function (m) {
-        var acao = "";
-        if (m.kind === "text") acao = '<button class="btn small gold" data-copiar="' + esc(m.body || "") + '">Copiar texto</button>';
-        else if (m.url) acao = '<a class="btn small gold" href="' + esc(m.url) + '" target="_blank" rel="noopener">' + (m.kind === "file" ? "Baixar" : "Abrir") + " ↗</a>";
-        return '<div class="panel material"><h3>' + esc(m.title) + "</h3>" + (m.body ? "<p>" + esc(m.body) + "</p>" : "") + acao + "</div>";
-      }).join("") + "</div>" : '<div class="empty">O material de apoio está sendo preparado.</div>')
+      '<div class="page-head"><p class="eyebrow">Para colocar em prática</p><h1>Material de apoio<span class="dot">.</span></h1><p>Tudo o que você precisa para divulgar a LowLab, na ordem em que vai usar.</p></div>' +
+      '<div class="mat-rules"><p><b>Antes de postar:</b> pode mostrar a plataforma, contar a sua experiência e usar os textos daqui. Não pode prometer ganho ou resultado, mostrar print de venda que não é seu ou que foi alterado, usar o nome LowLab em perfil, página ou domínio próprio, nem fazer spam. Quem descumprir é bloqueado.</p>' +
+      (regras ? '<button class="btn small gold" type="button" data-ler="' + esc(regras.id) + '">Ler as regras</button>' : "") + "</div>" +
+      (usadas.length > 1 ? '<div class="mat-nav">' + usadas.map(function (s, i) { return '<button class="chip" type="button" data-ir="' + s.id + '">' + (i + 1) + ". " + esc(s.titulo) + "</button>"; }).join("") + "</div>" : "") +
+      (usadas.length ? usadas.map(function (s, i) {
+        var itens = ativos.filter(function (m) { return secaoDe(m) === s.id; });
+        return '<section class="mat-sec" id="sec-' + s.id + '"><div class="mat-sec-head"><span class="mat-sec-num">' + (i + 1) + "</span><div><h2>" + esc(s.titulo) + "</h2>" + (s.desc ? "<p>" + esc(s.desc) + "</p>" : "") + "</div></div>" +
+          '<div class="mat-list">' + itens.map(linhaMaterial).join("") + "</div></section>";
+      }).join("") : '<div class="empty">O material de apoio está sendo preparado.</div>')
     );
-    ligarCopiar();
+    document.querySelectorAll("#conteudo [data-ler]").forEach(function (b) { b.addEventListener("click", function () { lerMaterial(b.getAttribute("data-ler")); }); });
+    document.querySelectorAll("#conteudo [data-ir]").forEach(function (b) {
+      b.addEventListener("click", function () { var el = $("sec-" + b.getAttribute("data-ir")); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
+    });
   }
 
   // ---------- Minha conta ----------
@@ -439,7 +537,8 @@
     var e = edit || {};
     var tipos = { link: "Link", file: "Arquivo para baixar", text: "Texto para copiar" };
     var linhas = st.materials.map(function (m) {
-      return "<tr><td><small>" + m.position + " · " + esc(tipos[m.kind] || m.kind) + "</small><br><b>" + esc(m.title) + "</b></td>" +
+      var sec = SECOES.filter(function (x) { return x.id === secaoDe(m); })[0];
+      return "<tr><td><small>" + m.position + " · " + esc(sec ? sec.titulo : "") + " · " + esc(tipos[m.kind] || m.kind) + "</small><br><b>" + esc(m.title) + "</b></td>" +
         '<td><span class="badge ' + (m.active ? "ok" : "") + '">' + (m.active ? "Publicado" : "Oculto") + '</span></td><td><div class="row-actions"><button class="btn small" data-edit-mat="' + esc(m.id) + '">Editar</button><button class="btn small danger" data-del-mat="' + esc(m.id) + '">Excluir</button></div></td></tr>';
     }).join("");
     $("adminCorpo").innerHTML =
@@ -447,8 +546,10 @@
       '<div class="full"><label for="mTit">Título</label><input id="mTit" type="text" maxlength="120" value="' + esc(e.title || "") + '"></div>' +
       '<div><label for="mTipo">Tipo</label><select id="mTipo">' + Object.keys(tipos).map(function (k) { return '<option value="' + k + '"' + (e.kind === k ? " selected" : "") + ">" + tipos[k] + "</option>"; }).join("") + "</select></div>" +
       '<div><label for="mPos">Ordem</label><input id="mPos" type="number" min="0" value="' + esc(e.position == null ? st.materials.length + 1 : e.position) + '"></div>' +
+      '<div><label for="mSec">Seção</label><select id="mSec">' + SECOES.map(function (x) { return '<option value="' + x.id + '"' + (secaoDe(e) === x.id ? " selected" : "") + ">" + esc(x.titulo) + "</option>"; }).join("") + "</select></div>" +
+      '<div><label for="mRes">Resumo (uma linha na lista)</label><input id="mRes" type="text" maxlength="160" value="' + esc(e.summary || "") + '"></div>' +
       '<div class="full"><label for="mUrl">Link (para Link ou Arquivo)</label><input id="mUrl" type="url" value="' + esc(e.url || "") + '" placeholder="https://…"></div>' +
-      '<div class="full"><label for="mBody">Texto (descrição, ou o texto pronto para copiar)</label><textarea id="mBody" maxlength="4000">' + esc(e.body || "") + "</textarea></div>" +
+      '<div class="full"><label for="mBody">Texto (descrição, ou o texto pronto para copiar)</label><textarea id="mBody" maxlength="12000" style="min-height:220px">' + esc(e.body || "") + "</textarea></div>" +
       '<label class="check full"><input id="mAtivo" type="checkbox"' + (e.active === false ? "" : " checked") + "> <span>Publicado para os parceiros</span></label></div>" +
       '<button class="btn gold" type="submit">' + (e.id ? "Salvar material" : "Adicionar material") + "</button>" + (e.id ? '<button class="link" type="button" id="bCancelarMat">Cancelar edição</button>' : "") + '<p class="msg" id="mMat"></p></form>' +
       '<div class="panel">' + (linhas ? '<div class="table-wrap"><table><thead><tr><th>Material</th><th>Status</th><th></th></tr></thead><tbody>' + linhas + "</tbody></table></div>" : '<div class="empty">Nenhum material cadastrado.</div>') + "</div>";
@@ -456,12 +557,14 @@
     $("fMat").addEventListener("submit", async function (ev) {
       ev.preventDefault();
       var out = $("mMat");
-      var d = { title: $("mTit").value.trim(), kind: $("mTipo").value, position: parseInt($("mPos").value, 10) || 0, url: $("mUrl").value.trim() || null, body: $("mBody").value.trim() || null, active: $("mAtivo").checked };
+      var d = { title: $("mTit").value.trim(), kind: $("mTipo").value, position: parseInt($("mPos").value, 10) || 0, url: $("mUrl").value.trim() || null, body: $("mBody").value.trim() || null, active: $("mAtivo").checked, section: $("mSec").value, summary: $("mRes").value.trim() || null };
       if (!d.title) { msg(out, "Preencha o título.", "err"); return; }
       if (d.url && !/^https:\/\//.test(d.url)) { msg(out, "O link precisa começar com https://", "err"); return; }
       if (d.kind !== "text" && !d.url) { msg(out, "Para Link ou Arquivo, preencha o link.", "err"); return; }
       if (d.kind === "text" && !d.body) { msg(out, "Escreva o texto que o parceiro vai copiar.", "err"); return; }
-      var r = e.id ? await sb.from("affiliate_materials").update(d).eq("id", e.id) : await sb.from("affiliate_materials").insert(d);
+      var salvar = function (x) { return e.id ? sb.from("affiliate_materials").update(x).eq("id", e.id) : sb.from("affiliate_materials").insert(x); };
+      var r = await salvar(d);
+      if (r.error && /section|summary/i.test(r.error.message || "")) { delete d.section; delete d.summary; r = await salvar(d); }
       if (r.error) { msg(out, traduz(r.error), "err"); return; }
       await carregarConteudo(); toast(e.id ? "Material salvo." : "Material adicionado."); adminMaterial();
     });
