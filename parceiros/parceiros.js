@@ -19,8 +19,9 @@
   var TAXAS = { pix: { pct: 0, fixo: 2.49, nome: "Pix" }, cartao: { pct: 0.0499, fixo: 2.49, nome: "Cartão" } };
   var CAKTO = "https://app.cakto.com.br/";
   var SUPORTE = "universidadelowlab@gmail.com";
-  // Convite do grupo de WhatsApp dos parceiros. Vazio = a tarefa pede o convite por e-mail.
-  var GRUPO_WHATSAPP = "";
+  // Convite do grupo de WhatsApp dos parceiros (Afiliados · LowLab; a entrada passa por aprovação de um admin).
+  // Vazio = a tarefa pede o convite por e-mail.
+  var GRUPO_WHATSAPP = "https://chat.whatsapp.com/DfLRL4PtuUH8vpCB5UkljF";
   var COLS_AFF = "user_id,status,slug,display_name,link_campus,link_circulo,created_at";
   var VISTAS = ["inicio", "pagina", "aulas", "material", "conta", "admin"];
   var ICO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -311,11 +312,11 @@
         },
         {
           id: "grupo", titulo: "Entre no grupo dos parceiros", tempo: "2 min",
-          desc: "Avisos, materiais novos e dúvidas rápidas ficam no grupo de WhatsApp dos parceiros.",
+          desc: "Avisos, materiais novos e dúvidas rápidas ficam no grupo de WhatsApp Afiliados · LowLab.",
           passos: GRUPO_WHATSAPP
-            ? ["Toque em Entrar no grupo e confirme no WhatsApp.", "Apresente-se: seu nome, sua cidade e em que rede você vai divulgar."]
+            ? ["Toque em Entrar no grupo e peça para participar. Um administrador aprova a sua entrada.", "Apresente-se: seu nome, sua cidade e em que rede você vai divulgar."]
             : ["Peça o convite do grupo para quem te apresentou a parceria ou pelo e-mail do suporte.", "Ao entrar, apresente-se: seu nome, sua cidade e em que rede você vai divulgar."],
-          pronto: "Você está no grupo e se apresentou.",
+          pronto: "Sua entrada foi aprovada e você se apresentou no grupo.",
           acoes: GRUPO_WHATSAPP
             ? [{ t: "ext", u: GRUPO_WHATSAPP, l: "Entrar no grupo" }]
             : [{ t: "mail", assunto: "Convite do grupo de parceiros", l: "Pedir o convite por e-mail" }]
@@ -568,7 +569,8 @@
           desc: "No TikTok, a live depende da conta: algumas liberam com 50 seguidores, outras só com 1.000.",
           passos: [
             "No TikTok, toque em + e veja se aparece a opção LIVE.",
-            "Ainda não apareceu? Faça a live no Instagram, que não exige número mínimo de seguidores, e continue os vídeos até liberar no TikTok."
+            "Ainda não apareceu? Você pode fazer a live no Instagram, que não exige número mínimo de seguidores, enquanto continua os vídeos.",
+            "Ou conseguir seguidores pelo link do checklist da live (serviço pago). Seguidor comprado vai contra as regras do TikTok, que pode remover esses seguidores ou restringir a conta: a decisão e o risco são seus."
           ],
           pronto: "Você sabe em qual rede vai fazer a primeira live.",
           acoes: [{ t: "mat", k: "live_checklist", l: "Abrir o checklist da live" }]
