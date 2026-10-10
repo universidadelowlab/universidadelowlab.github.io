@@ -356,12 +356,14 @@
     { id: "comece", titulo: "Comece aqui", desc: "Afilie-se, monte sua página e leia as regras antes de postar." },
     { id: "entenda", titulo: "Entenda o que você vende", desc: "A LowLab, o case do Bruno e como responder às dúvidas." },
     { id: "conteudo", titulo: "Crie conteúdo", desc: "Ganchos, bio, mensagens prontas e como fazer cortes." },
+    { id: "videos", titulo: "Vídeos para cortes", desc: "Copie o link do vídeo e cole no Opus Clip para gerar seus cortes. Nos cortes, dê o crédito a quem aparece no vídeo." },
     { id: "live", titulo: "Venda ao vivo", desc: "O roteiro completo da live." },
     { id: "outros", titulo: "Mais materiais", desc: "" }
   ];
   var ICONE = {
     text: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/></svg>',
     link: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+    video: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>'
   };
   function secaoDe(m) { var s = m.section || "outros"; return SECOES.some(function (x) { return x.id === s; }) ? s : "outros"; }
@@ -426,6 +428,10 @@
   // [fmt-end]
   function linhaMaterial(m) {
     var r = resumoDe(m), txt = '<span class="mat-txt"><b>' + esc(m.title) + "</b>" + (r ? "<small>" + esc(r) + "</small>" : "") + "</span>";
+    if (secaoDe(m) === "videos" && m.kind === "link" && m.url) {
+      return '<div class="mat-row mat-video"><span class="mat-ico">' + ICONE.video + "</span>" + txt +
+        '<span class="mat-acts"><button class="btn small gold" type="button" data-copiar="' + esc(m.url) + '">Copiar link</button><a class="btn small" href="' + esc(m.url) + '" target="_blank" rel="noopener">Assistir ↗</a></span></div>';
+    }
     if (m.kind !== "text" && m.url) {
       return '<a class="mat-row link" href="' + esc(m.url) + '" target="_blank" rel="noopener"><span class="mat-ico">' + (ICONE[m.kind] || ICONE.link) + "</span>" + txt +
         '<span class="mat-go">' + (m.kind === "file" ? "Baixar" : "Abrir") + " ↗</span></a>";
@@ -447,7 +453,8 @@
     marcar("material");
     var ativos = st.materials.filter(function (x) { return x.active; });
     var regras = ativos.filter(function (m) { return m.kind === "text" && /^regras/i.test(m.title); })[0];
-    var usadas = SECOES.filter(function (s) { return ativos.some(function (m) { return secaoDe(m) === s.id; }); });
+    var usadas = SECOES.filter(function (s) { return s.id === "videos" || ativos.some(function (m) { return secaoDe(m) === s.id; }); });
+    var guiaOpus = ativos.filter(function (m) { return m.kind === "text" && /opus clip/i.test(m.title); })[0];
     render(
       '<div class="page-head"><p class="eyebrow">Para colocar em prática</p><h1>Material de apoio<span class="dot">.</span></h1><p>Tudo o que você precisa para divulgar a LowLab, na ordem em que vai usar.</p></div>' +
       '<div class="mat-rules"><p><b>Antes de postar:</b> pode mostrar a plataforma, contar a sua experiência e usar os textos daqui. Não pode prometer ganho ou resultado, mostrar print de venda que não é seu ou que foi alterado, usar o nome LowLab em perfil, página ou domínio próprio, nem fazer spam. Quem descumprir é bloqueado.</p>' +
@@ -455,11 +462,17 @@
       (usadas.length > 1 ? '<div class="mat-nav">' + usadas.map(function (s, i) { return '<button class="chip" type="button" data-ir="' + s.id + '">' + (i + 1) + ". " + esc(s.titulo) + "</button>"; }).join("") + "</div>" : "") +
       (usadas.length ? usadas.map(function (s, i) {
         var itens = ativos.filter(function (m) { return secaoDe(m) === s.id; });
+        var vazio = s.id === "videos" && !itens.length;
         return '<section class="mat-sec" id="sec-' + s.id + '"><div class="mat-sec-head"><span class="mat-sec-num">' + (i + 1) + "</span><div><h2>" + esc(s.titulo) + "</h2>" + (s.desc ? "<p>" + esc(s.desc) + "</p>" : "") + "</div></div>" +
-          '<div class="mat-list">' + itens.map(linhaMaterial).join("") + "</div></section>";
+          (vazio ? '<div class="mat-vazio"><p><b>Em breve:</b> o vídeo do Bruno contando a história dele. Quando chegar, é só copiar o link aqui e colar no Opus Clip.</p>' +
+            (guiaOpus ? '<button class="btn small" type="button" data-ler="' + esc(guiaOpus.id) + '">Como fazer cortes com o Opus Clip</button>' : "") + "</div>"
+          : '<div class="mat-list">' + itens.map(linhaMaterial).join("") + "</div>" +
+            (s.id === "videos" && guiaOpus ? '<p class="mat-dica">Primeira vez no Opus Clip? <button class="link" type="button" data-ler="' + esc(guiaOpus.id) + '">Veja o passo a passo</button>.</p>' : "")) +
+          "</section>";
       }).join("") : '<div class="empty">O material de apoio está sendo preparado.</div>')
     );
     document.querySelectorAll("#conteudo [data-ler]").forEach(function (b) { b.addEventListener("click", function () { lerMaterial(b.getAttribute("data-ler")); }); });
+    ligarCopiar();
     document.querySelectorAll("#conteudo [data-ir]").forEach(function (b) {
       b.addEventListener("click", function () { var el = $("sec-" + b.getAttribute("data-ir")); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
     });

@@ -195,6 +195,15 @@ td small{color:var(--dim)}
 a.mat-row{font-weight:400;line-height:1.5}
 .mat-go{display:flex;align-items:center;gap:12px;color:var(--goldl);font-weight:700;font-size:14px;white-space:nowrap}
 .mat-go em{font-style:normal;color:var(--dim);font-weight:500;font-size:12.5px}
+.mat-row.mat-video{cursor:default}
+.mat-row.mat-video:hover{background:none}
+.mat-row.mat-video .mat-ico{background:rgba(199,166,106,.14);border-color:var(--line2);color:var(--goldl)}
+.mat-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.mat-vazio{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:18px;border:1px dashed var(--line2);border-radius:var(--r);color:var(--muted);font-size:14px;line-height:1.55}
+.mat-vazio p{margin:0;flex:1;min-width:240px}
+.mat-vazio b{color:var(--cream)}
+.mat-dica{margin:10px 2px 0;color:var(--muted);font-size:13.5px}
+.mat-dica .link{display:inline;margin:0;padding:0;font-size:inherit}
 /* leitura do material */
 .mat-doc{max-width:700px;margin:0 auto}
 .mat-doc h2{font-size:clamp(22px,3vw,28px);line-height:1.15;padding-right:28px}
@@ -217,6 +226,7 @@ a.mat-row{font-weight:400;line-height:1.5}
   .mat-row{grid-template-columns:36px 1fr;gap:12px;padding:14px}
   .mat-ico{width:36px;height:36px}
   .mat-go{grid-column:2;font-size:13px}
+  .mat-acts{grid-column:2;justify-content:flex-start}
   .snip{flex-direction:column}
   .mat-rules .btn{width:100%}
 }
