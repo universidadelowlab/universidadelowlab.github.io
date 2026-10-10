@@ -23,7 +23,7 @@
   // Vazio = a tarefa pede o convite por e-mail.
   var GRUPO_WHATSAPP = "https://chat.whatsapp.com/DfLRL4PtuUH8vpCB5UkljF";
   var COLS_AFF = "user_id,status,slug,display_name,link_campus,link_circulo,created_at";
-  var VISTAS = ["inicio", "pagina", "aulas", "material", "conta", "admin"];
+  var VISTAS = ["inicio", "pagina", "aulas", "conta", "admin"];
   var ICO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var ICO_TEMPO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
 
@@ -154,9 +154,7 @@
     $("modal").hidden = true; $("modalCorpo").innerHTML = "";
     if (!st.sujo) return;
     st.sujo = false;
-    var v = vistaAtual();
-    if (v === "inicio") depoisDeMudar(st.antesModal || etapasFeitas());
-    else if (v === "material") telaMaterial(true);
+    if (vistaAtual() === "inicio") depoisDeMudar(st.antesModal || etapasFeitas());
   }
 
   // ---------- login / cadastro ----------
@@ -262,17 +260,21 @@
   window.addEventListener("hashchange", rota);
   function rota() {
     if ($("vApp").hidden) return;
-    var v = vistaAtual();
+    var v = vistaAtual(), ancora = null;
+    // o antigo "Material de apoio" agora é a Consulta rápida, dentro do Meu espaço
+    if (v === "material") { v = "inicio"; ancora = "sec-consulta"; history.replaceState(null, "", "#inicio"); }
     if (VISTAS.indexOf(v) < 0) v = "inicio";
     if (v === "admin" && !ehAdmin()) v = "inicio";
     if (v === "aulas" && document.querySelector('[data-nav="aulas"]').hidden) v = "inicio";
     document.querySelectorAll("[data-nav]").forEach(function (a) { a.classList.toggle("active", a.getAttribute("data-nav") === v); });
     $("side").classList.remove("open");
-    var f = { inicio: telaInicio, pagina: telaPagina, aulas: telaAulas, material: telaMaterial, conta: telaConta, admin: telaAdmin }[v];
+    var f = { inicio: telaInicio, pagina: telaPagina, aulas: telaAulas, conta: telaConta, admin: telaAdmin }[v];
     f();
     window.scrollTo(0, 0);
+    if (ancora) setTimeout(function () { irPara(ancora); }, 60);
   }
   function render(html) { $("conteudo").innerHTML = html; $("conteudo").focus({ preventScroll: true }); }
+  function irPara(id) { var el = $(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
   function ligarCopiar() {
     document.querySelectorAll("#conteudo [data-copiar]").forEach(function (b) { b.addEventListener("click", function () { copiar(b.getAttribute("data-copiar")); }); });
   }
@@ -712,13 +714,19 @@
     var prox = etapa ? etapa.tarefas.filter(function (t) { return !tarefaFeita(t, a, ck); })[0] : null;
     var nome = esc(primeiroNome());
     var titulo = !etapa ? "Jornada completa, " + nome : pr.feitas === 0 ? "Boas-vindas à parceria, " + nome : "Seu próximo passo, " + nome;
+    var jornada = '<div class="jr-etapas" id="sec-jornada">' + JORNADA.map(function (e, i) { return etapaHtml(e, i, a, ck, pr, prox); }).join("") + "</div>";
+    var consulta = consultaRapida() + videosCortes();
     render(
       '<div class="page-head"><p class="eyebrow">Sua jornada de parceiro</p><h1>' + titulo + '<span class="dot">.</span></h1>' +
-      "<p>São 8 etapas, do cadastro à rotina de vendas. Cada tarefa diz o que fazer, quanto tempo leva e quando está pronta. Marque ao terminar: o progresso fica salvo na sua conta.</p></div>" +
+      "<p>São 8 etapas, do cadastro à rotina de vendas. Cada tarefa diz o que fazer, quanto tempo leva e quando está pronta. Marque ao terminar: o progresso fica salvo na sua conta. Os textos prontos e os vídeos para cortes ficam na Consulta rápida.</p></div>" +
+      '<div class="jr-atalhos"><span>Ir para:</span>' + [["sec-jornada", "Jornada"], ["sec-consulta", "Consulta rápida"], ["sec-videos", "Vídeos para cortes"], ["sec-ganhos", "Quanto você ganha"]].map(function (x) {
+        return '<button class="chip" type="button" data-ir="' + x[0] + '">' + x[1] + "</button>";
+      }).join("") + "</div>" +
       (!a ? '<div class="jr-aviso">Você está vendo a jornada como administrador, sem conta de parceiro. O progresso fica salvo só neste navegador.</div>' : "") +
       topoJornada(pr, etapa, prox, a) +
       (paginaPronta() ? linhaLink() : "") +
-      '<div class="jr-etapas">' + JORNADA.map(function (e, i) { return etapaHtml(e, i, a, ck, pr, prox); }).join("") + "</div>" +
+      // com a jornada completa, a consulta rápida sobe para o topo (é o uso do dia a dia)
+      (etapa ? jornada + consulta : consulta + jornada) +
       '<div class="jr-extra">' + cartaoComissao() + cartaoCampus() + "</div>"
     );
     ligarJornada();
@@ -741,8 +749,8 @@
         '<div class="jr-acts">' + principal + '<button class="btn small" type="button" data-ir-tk="' + prox.id + '">Ver como fazer</button></div></div>';
     } else {
       lado = '<div class="jr-next"><p class="eyebrow">Tudo pronto</p><h3>Você completou as 8 etapas.</h3>' +
-        '<p class="jr-next-desc">Agora é rotina: vídeos todo dia, lives no mesmo horário e a revisão de sexta. Material novo aparece no Material de apoio.</p>' +
-        '<div class="jr-acts">' + acaoHtml({ t: "mat", k: "rotina", l: "Ver a rotina da semana" }, true) + "</div></div>";
+        '<p class="jr-next-desc">Agora é rotina: vídeos todo dia, lives no mesmo horário e a revisão de sexta. Os textos prontos estão na Consulta rápida, logo abaixo, e material novo aparece lá.</p>' +
+        '<div class="jr-acts">' + acaoHtml({ t: "mat", k: "rotina", l: "Ver a rotina da semana" }, true) + '<button class="btn small" type="button" data-ir="sec-consulta">Abrir a consulta rápida</button></div></div>';
     }
     return '<div class="jr-top"><div class="jr-prog"><div class="jr-ring" style="--p:' + pct + '" role="img" aria-label="' + pct + '% da jornada concluída"><b>' + pct + "%</b></div>" +
       '<div class="jr-prog-txt"><p class="eyebrow">Seu progresso</p><h3>' + pr.feitas + " de " + pr.total + " tarefas</h3><p>" +
@@ -790,7 +798,7 @@
     var linhas = PLANOS.map(function (p) {
       return "<tr><td><b>" + esc(p.nome) + "</b><small>" + esc(p.ganho) + "</small></td><td>" + brl(comissaoDe(p.preco, "pix")) + "</td><td>" + brl(comissaoDe(p.preco, "cartao")) + "</td></tr>";
     }).join("");
-    return '<div class="panel com"><p class="eyebrow">Quanto você ganha</p><h3>50% de cada venda, depois da taxa da Cakto</h3>' +
+    return '<div class="panel com" id="sec-ganhos"><p class="eyebrow">Quanto você ganha</p><h3>50% de cada venda, depois da taxa da Cakto</h3>' +
       '<table class="com-tab"><thead><tr><th>Plano</th><th>Pix</th><th>Cartão</th></tr></thead><tbody>' + linhas + "</tbody></table>" +
       '<div class="calc"><p class="calc-t">Simule um mês</p><div class="calc-row">' +
       '<label class="calc-f">Vendas do Mensal<input id="cM" type="number" inputmode="numeric" min="0" max="999" value="' + st.calc.m + '"></label>' +
@@ -830,6 +838,38 @@
       '<div class="tk-acts">' + acaoHtml({ t: "campus", l: "Abrir o campus" }, false) + acaoHtml({ t: "mat", k: "tour", l: "Como mostrar na live" }, false) + "</div></div>";
   }
 
+  // Consulta rápida: todos os textos prontos num lugar só, para o dia a dia (substitui a antiga aba Material de apoio).
+  function consultaRapida() {
+    var textos = st.materials.filter(function (m) { return m.active && m.kind === "text" && secaoDe(m) !== "videos"; });
+    if (!textos.length) return "";
+    var regras = matKey("regras");
+    var lidos = textos.filter(lidoMat).length;
+    var grupos = SECOES.filter(function (s) { return s.id !== "videos"; }).map(function (s) {
+      var itens = textos.filter(function (m) { return secaoDe(m) === s.id; });
+      if (!itens.length) return "";
+      return '<div class="cr-grupo"><p class="cr-tit">' + esc(s.titulo) + '</p><div class="cr-grid">' + itens.map(itemConsulta).join("") + "</div></div>";
+    }).join("");
+    return '<section class="jr-sec" id="sec-consulta"><div class="jr-sec-head"><div><p class="eyebrow">Para o dia a dia</p><h2>Consulta rápida</h2>' +
+      "<p>Os textos prontos de todas as etapas, num lugar só: roteiro da live, ganchos, mensagens e respostas. Você já abriu " + lidos + " de " + textos.length + ".</p></div></div>" +
+      '<div class="cr-aviso"><p><b>Antes de postar:</b> sem promessa de ganho ou resultado, sem print de venda que não é seu ou que foi alterado, sem o nome LowLab em perfil, página ou domínio próprio e sem spam. Quem descumpre recebe uma advertência; na segunda vez, sai do programa.</p>' +
+      (regras ? '<button class="btn small" type="button" data-ler="' + esc(regras.id) + '">Ler as regras</button>' : "") + "</div>" + grupos + "</section>";
+  }
+  function itemConsulta(m) {
+    var lido = lidoMat(m), r = resumoDe(m);
+    return '<button class="cr-item' + (lido ? " lido" : "") + '" type="button" data-ler="' + esc(m.id) + '"><span class="cr-ico">' + (lido ? ICO_CHECK : ICONE.text) + "</span>" +
+      '<span class="cr-txt"><b>' + esc(m.title) + "</b>" + (r ? "<small>" + esc(r) + "</small>" : "") + '</span><span class="cr-min">' + (lido ? "Lido" : minutos(m.body) + " min") + "</span></button>";
+  }
+  function videosCortes() {
+    var videos = st.materials.filter(function (m) { return m.active && secaoDe(m) === "videos" && m.url; });
+    var guia = matKey("opus");
+    return '<section class="jr-sec" id="sec-videos"><div class="jr-sec-head"><div><p class="eyebrow">Conteúdo pronto</p><h2>Vídeos para cortes</h2>' +
+      "<p>Copie o link do vídeo e cole no Opus Clip para gerar seus cortes. Nos cortes, dê o crédito a quem aparece no vídeo.</p></div>" +
+      (guia ? '<button class="btn small" type="button" data-ler="' + esc(guia.id) + '">Como fazer cortes</button>' : "") + "</div>" +
+      (videos.length ? '<div class="mat-list">' + videos.map(linhaMaterial).join("") + "</div>"
+        : '<div class="mat-vazio"><p><b>Em breve:</b> o vídeo do Bruno contando a história dele. Quando chegar, ele aparece aqui com o botão Copiar link, para colar no Opus Clip.</p></div>') +
+      "</section>";
+  }
+
   function ligarJornada() {
     var raiz = $("conteudo");
     raiz.querySelectorAll("[data-tk]").forEach(function (b) {
@@ -852,6 +892,7 @@
     raiz.querySelectorAll("[data-ck-campus]").forEach(function (x) { x.addEventListener("click", function () { setCk("campus", true); }); });
     raiz.querySelectorAll("[data-ir-tk]").forEach(function (b) { b.addEventListener("click", function () { irTarefa(b.getAttribute("data-ir-tk")); }); });
     raiz.querySelectorAll("[data-ir-et]").forEach(function (b) { b.addEventListener("click", function () { irEtapa(b.getAttribute("data-ir-et")); }); });
+    raiz.querySelectorAll("[data-ir]").forEach(function (b) { b.addEventListener("click", function () { irPara(b.getAttribute("data-ir")); }); });
     ligarCopiar();
     ligarCalc();
   }
@@ -907,7 +948,7 @@
       '<ol class="guia"><li>Clique nos botões abaixo e peça a afiliação. Se ainda não tiver conta na Cakto, ela pede para você criar. A aprovação é automática.<span class="guia-acts">' + botoesConvite(paginaPronta() ? "" : " gold") + "</span></li>" +
       "<li>Na Cakto, abra <b>Produtos › Minhas Afiliações</b> e, no produto, clique em <b>Ver Links</b>. O Mensal se chama <b>LowLab Campus</b> e o Vitalício, <b>LowLab Vitalício</b>.</li>" +
       "<li>Copie o link completo de cada plano e cole no campo certo aqui embaixo, junto com seu apelido.</li></ol>" +
-      '<p class="hint" style="font-size:14px;margin:0">Dúvida? O passo a passo completo está no <a href="#material">Material de apoio</a>, em Afiliação na Cakto e sua página.</p></div>' +
+      (matKey("afiliacao") ? '<p class="hint" style="font-size:14px;margin:0">Dúvida? <button class="link inline" type="button" data-ler="' + esc(matKey("afiliacao").id) + '">Veja o passo a passo completo da afiliação</button>.</p>' : "") + "</div>" +
       (link ? '<div class="panel"><p class="eyebrow">Seu endereço para divulgar</p><div class="copy-row"><span>' + esc(link) + '</span><a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir ↗</a><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div></div>' : "") +
       '<form class="panel" id="fPagina" novalidate><div class="grid2"><div><label for="pNome">Seu nome na página</label><input id="pNome" type="text" maxlength="60" value="' + esc(a.display_name || (st.profile && st.profile.full_name) || "") + '" placeholder="Ex.: Ana Souza"><p class="hint">Aparece discretamente na página como quem indicou.</p></div>' +
       '<div><label for="pSlug">Apelido do endereço</label><input id="pSlug" type="text" maxlength="30" value="' + esc(a.slug || "") + '" placeholder="ex.: ana-souza"><p class="hint">' + esc(SITE) + '/p/<b id="slugPrev">' + esc(a.slug || "seu-apelido") + "</b> · letras minúsculas, números e hífen</p></div></div>" +
@@ -920,6 +961,7 @@
     );
     ligarCopiar();
     ligarConvites();
+    document.querySelectorAll("#conteudo [data-ler]").forEach(function (b) { b.addEventListener("click", function () { lerMaterial(b.getAttribute("data-ler")); }); });
     $("pSlug").addEventListener("input", function () {
       var v = $("pSlug").value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9-]+/g, "-").replace(/^-+/, "").slice(0, 30);
       $("pSlug").value = v; $("slugPrev").textContent = v || "seu-apelido";
@@ -1000,14 +1042,15 @@
     });
   }
 
-  // ---------- Material de apoio ----------
+  // ---------- Textos prontos (Consulta rápida) e leitura ----------
+  // Grupos da Consulta rápida, na ordem de uso do dia a dia. O id é o campo section do banco.
   var SECOES = [
-    { id: "comece", titulo: "Comece aqui", desc: "Como a parceria funciona, a afiliação na Cakto, as regras e a rotina da semana." },
-    { id: "entenda", titulo: "Entenda o que você vende", desc: "O pitch, o tour pela plataforma, o case do Bruno e as respostas às objeções." },
-    { id: "conteudo", titulo: "Crie conteúdo", desc: "Perfil, bio, os 7 primeiros dias, ganchos, mensagens prontas e cortes." },
-    { id: "live", titulo: "Venda ao vivo", desc: "Checklist, roteiro de 60 minutos, respostas para o chat e o que nunca dizer." },
-    { id: "videos", titulo: "Vídeos para cortes", desc: "Copie o link do vídeo e cole no Opus Clip para gerar seus cortes. Nos cortes, dê o crédito a quem aparece no vídeo." },
-    { id: "outros", titulo: "Mais materiais", desc: "" }
+    { id: "live", titulo: "Para a live" },
+    { id: "conteudo", titulo: "Para criar conteúdo" },
+    { id: "entenda", titulo: "Para conversar e vender" },
+    { id: "comece", titulo: "Parceria e regras" },
+    { id: "videos", titulo: "Vídeos para cortes" },
+    { id: "outros", titulo: "Outros textos" }
   ];
   var ICONE = {
     text: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/></svg>',
@@ -1094,7 +1137,7 @@
     var m = st.materials.filter(function (x) { return x.id === id; })[0]; if (!m) return;
     var s = SECOES.filter(function (x) { return x.id === secaoDe(m); })[0];
     abrirModal(
-      '<div class="mat-doc"><p class="eyebrow">' + esc(s ? s.titulo : "Material de apoio") + '</p><h2 id="modalTitulo">' + esc(m.title) + "</h2>" +
+      '<div class="mat-doc"><p class="eyebrow">' + esc(s ? s.titulo : "Consulta rápida") + '</p><h2 id="modalTitulo">' + esc(m.title) + "</h2>" +
       '<div class="mat-top"><span>' + minutos(m.body) + ' min de leitura</span><button class="btn small gold" type="button" data-copiar="' + esc(m.body || "") + '">Copiar tudo</button></div>' +
       formatar(m.body) + "</div>"
     );
@@ -1102,40 +1145,6 @@
     var antes = etapasFeitas();
     if (m.key && setCk("m_" + m.key, true)) { st.sujo = true; st.antesModal = antes; }
   }
-  function telaMaterial(manterScroll) {
-    var y = window.scrollY;
-    var ativos = st.materials.filter(function (x) { return x.active; });
-    var regras = matKey("regras") || ativos.filter(function (m) { return m.kind === "text" && /^regras/i.test(m.title); })[0];
-    var usadas = SECOES.filter(function (s) { return s.id === "videos" || ativos.some(function (m) { return secaoDe(m) === s.id; }); });
-    var guiaOpus = matKey("opus") || ativos.filter(function (m) { return m.kind === "text" && /opus clip/i.test(m.title); })[0];
-    var comKey = ativos.filter(function (m) { return m.key && m.kind === "text"; });
-    var lidos = comKey.filter(lidoMat).length;
-    render(
-      '<div class="page-head"><p class="eyebrow">Para colocar em prática</p><h1>Material de apoio<span class="dot">.</span></h1><p>Tudo o que você precisa para divulgar a LowLab, na ordem em que vai usar.' +
-      (comKey.length ? " Você já leu " + lidos + " de " + comKey.length + " textos." : "") + "</p></div>" +
-      '<div class="mat-rules"><p><b>Antes de postar:</b> pode mostrar a plataforma, contar a sua experiência e usar os textos daqui. Não pode prometer ganho ou resultado, mostrar print de venda que não é seu ou que foi alterado, usar o nome LowLab em perfil, página ou domínio próprio, nem fazer spam. Quem descumpre recebe uma advertência; na segunda vez, sai do programa.</p>' +
-      (regras ? '<button class="btn small gold" type="button" data-ler="' + esc(regras.id) + '">Ler as regras</button>' : "") + "</div>" +
-      (usadas.length > 1 ? '<div class="mat-nav">' + usadas.map(function (s, i) { return '<button class="chip" type="button" data-ir="' + s.id + '">' + (i + 1) + ". " + esc(s.titulo) + "</button>"; }).join("") + "</div>" : "") +
-      (usadas.length ? usadas.map(function (s, i) {
-        var itens = ativos.filter(function (m) { return secaoDe(m) === s.id; });
-        var vazio = s.id === "videos" && !itens.length;
-        return '<section class="mat-sec" id="sec-' + s.id + '"><div class="mat-sec-head"><span class="mat-sec-num">' + (i + 1) + "</span><div><h2>" + esc(s.titulo) + "</h2>" + (s.desc ? "<p>" + esc(s.desc) + "</p>" : "") + "</div></div>" +
-          (vazio ? '<div class="mat-vazio"><p><b>Em breve:</b> o vídeo do Bruno contando a história dele. Quando chegar, é só copiar o link aqui e colar no Opus Clip.</p>' +
-            (guiaOpus ? '<button class="btn small" type="button" data-ler="' + esc(guiaOpus.id) + '">Como fazer cortes com o Opus Clip</button>' : "") + "</div>"
-          : '<div class="mat-list">' + itens.map(linhaMaterial).join("") + "</div>" +
-            (s.id === "videos" && guiaOpus ? '<p class="mat-dica">Primeira vez no Opus Clip? <button class="link" type="button" data-ler="' + esc(guiaOpus.id) + '">Veja o passo a passo</button>.</p>' : "")) +
-          "</section>";
-      }).join("") : '<div class="empty">O material de apoio está sendo preparado.</div>')
-    );
-    document.querySelectorAll("#conteudo [data-ler]").forEach(function (b) { b.addEventListener("click", function () { lerMaterial(b.getAttribute("data-ler")); }); });
-    ligarCopiar();
-    ligarConvites();
-    document.querySelectorAll("#conteudo [data-ir]").forEach(function (b) {
-      b.addEventListener("click", function () { var el = $("sec-" + b.getAttribute("data-ir")); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
-    });
-    if (manterScroll) window.scrollTo(0, y);
-  }
-
   // ---------- Minha conta ----------
   function telaConta() {
     render(
@@ -1163,8 +1172,8 @@
   var adminAba = "afiliados";
   async function telaAdmin() {
     if (!ehAdmin()) { location.hash = "inicio"; return; }
-    render('<div class="page-head"><p class="eyebrow">Só para você</p><h1>Administração<span class="dot">.</span></h1><p>Afiliados, aulas e material da Área de Parceiros.</p></div>' +
-      '<div class="chips">' + [["afiliados", "Afiliados"], ["aulas", "Aulas"], ["material", "Material"]].map(function (t) {
+    render('<div class="page-head"><p class="eyebrow">Só para você</p><h1>Administração<span class="dot">.</span></h1><p>Afiliados, aulas e os textos e vídeos da Área de Parceiros (Consulta rápida e jornada).</p></div>' +
+      '<div class="chips">' + [["afiliados", "Afiliados"], ["aulas", "Aulas"], ["material", "Textos e vídeos"]].map(function (t) {
         return '<button class="chip' + (adminAba === t[0] ? " active" : "") + '" data-aba="' + t[0] + '">' + t[1] + "</button>";
       }).join("") + '</div><div id="adminCorpo"><div class="loader" style="margin:30px auto"></div></div>');
     document.querySelectorAll("[data-aba]").forEach(function (b) { b.addEventListener("click", function () { adminAba = b.getAttribute("data-aba"); telaAdmin(); }); });
