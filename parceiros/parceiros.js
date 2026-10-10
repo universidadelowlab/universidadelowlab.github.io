@@ -588,13 +588,13 @@
         },
         {
           id: "live_ensaio", titulo: "Ensaie o roteiro de 60 minutos", tempo: "30 min",
-          desc: "O roteiro diz o que falar e o que mostrar em cada bloco, minuto a minuto.",
+          desc: "O roteiro é para quem está começando do zero: linguagem simples e o que falar e mostrar em cada bloco, minuto a minuto.",
           passos: [
             "Leia o roteiro inteiro uma vez.",
-            "Ensaie em voz alta a abertura, o bloco da LowLab e o fechamento.",
-            "Decore a frase de afiliado: “Eu sou afiliado da LowLab: se você entrar pelo link da minha bio, eu ganho uma comissão e você paga o mesmo preço.”"
+            "Ensaie em voz alta a abertura, a montagem do produto com o chat e o fechamento.",
+            "Decore o CTA: “Clica no link da minha bio, olha a plataforma por dentro e vai na aba Simule.”"
           ],
-          pronto: "Você faz a abertura e o fechamento sem ler.",
+          pronto: "Você faz a abertura, o CTA e o fechamento sem ler.",
           acoes: [{ t: "mat", k: "live_roteiro", l: "Abrir o roteiro" }]
         },
         {
@@ -607,13 +607,13 @@
         },
         {
           id: "live1", titulo: "Faça a sua primeira live", tempo: "30 a 60 min",
-          desc: "Ensine de verdade: monte uma oferta ao vivo com o chat e mostre onde você aprendeu.",
+          desc: "Fale simples, para quem está começando do zero: monte um produto ao vivo com o chat e mostre onde aprender o passo a passo.",
           passos: [
             "30 minutos antes: avise nos stories, ative o Não perturbe e teste câmera e som.",
-            "Ao começar, fixe o comentário: “Sou afiliado da LowLab. O link está na minha bio.”",
-            "Siga o roteiro e fale do link no máximo 3 vezes: no bloco da LowLab, nas objeções e no fechamento."
+            "Ao começar, ative a divulgação de conteúdo comercial (se o app oferecer) e fixe o comentário: “Link na bio: veja a plataforma por dentro e faça a sua simulação na aba Simule.”",
+            "Fale o CTA do link da bio a cada 5 a 10 minutos e sempre que chegar gente nova."
           ],
-          pronto: "Live feita do começo ao fim, com a frase de afiliado.",
+          pronto: "Live feita do começo ao fim, com o CTA em todos os blocos.",
           acoes: [{ t: "mat", k: "live_roteiro", l: "Abrir o roteiro" }]
         },
         {
