@@ -22,9 +22,13 @@
   // Convite do grupo de WhatsApp dos parceiros (Afiliados · LowLab; a entrada passa por aprovação de um admin).
   // Vazio = a tarefa pede o convite por e-mail.
   var GRUPO_WHATSAPP = "https://chat.whatsapp.com/DfLRL4PtuUH8vpCB5UkljF";
+  // Ajuda para o parceiro (qualquer dúvida ou problema): WhatsApp do Bruno, gestor de parceiros.
+  var AJUDA_WHATS = "5511952030011";
+  var AJUDA_FONE = "(11) 95203-0011";
   var COLS_AFF = "user_id,status,slug,display_name,link_campus,link_circulo,created_at";
   var VISTAS = ["inicio", "pagina", "aulas", "conta", "admin"];
   var ICO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var ICO_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5z"/><path d="M9 10.5h6M9 13.5h4"/></svg>';
   var ICO_TEMPO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
 
   var sb = null;
@@ -89,6 +93,19 @@
   // arredonda para baixo (centavo), para nunca mostrar mais do que a Cakto paga
   function comissaoDe(preco, forma) { return Math.floor(liquido(preco, forma) * COMISSAO * 100 + 1e-6) / 100; }
   function vistaAtual() { return (location.hash.slice(1) || "inicio").split("/")[0]; }
+  function linkAjuda() {
+    var n = primeiroNome();
+    var quem = n && n !== "parceiro" ? "Sou " + n + ", da Área de Parceiros da LowLab, e" : "Sou da Área de Parceiros da LowLab e";
+    return "https://wa.me/" + AJUDA_WHATS + "?text=" + encodeURIComponent("Oi, Bruno! " + quem + " preciso de ajuda com: ");
+  }
+  function botaoAjuda(texto, classe) {
+    return '<a class="btn small' + (classe || "") + '" href="' + esc(linkAjuda()) + '" target="_blank" rel="noopener">' + esc(texto || "Chamar o Bruno no WhatsApp") + " ↗</a>";
+  }
+  function ajudaHtml() {
+    return '<div class="jr-ajuda"><span class="jr-ajuda-ico" aria-hidden="true">' + ICO_CHAT + "</span>" +
+      "<p><b>Ficou com dúvida ou travou em alguma coisa?</b> Chame o Bruno, gestor de parceiros, no WhatsApp: " + esc(AJUDA_FONE) + ". Ele ajuda em qualquer etapa.</p>" +
+      botaoAjuda("Chamar no WhatsApp", " gold") + "</div>";
+  }
   function matKey(k) { return st.materials.filter(function (m) { return m.key === k && m.active; })[0] || null; }
 
   // ---------- progresso da jornada (salvo na conta; sem conta de parceiro, só neste navegador) ----------
@@ -239,6 +256,7 @@
     $("whoNome").textContent = (st.profile.full_name || st.aff && st.aff.display_name || "Parceiro");
     $("whoEmail").textContent = sess.user.email;
     $("navAdmin").hidden = !admin;
+    document.querySelectorAll("[data-ajuda]").forEach(function (a) { a.href = linkAjuda(); });
     // a página de aulas só aparece quando houver aula publicada (o admin sempre vê, para cadastrar)
     document.querySelector('[data-nav="aulas"]').hidden = !admin && !st.lessons.some(function (x) { return x.active; });
     views("vApp");
@@ -725,6 +743,7 @@
       (!a ? '<div class="jr-aviso">Você está vendo a jornada como administrador, sem conta de parceiro. O progresso fica salvo só neste navegador.</div>' : "") +
       topoJornada(pr, etapa, prox, a) +
       (paginaPronta() ? linhaLink() : "") +
+      ajudaHtml() +
       // com a jornada completa, a consulta rápida sobe para o topo (é o uso do dia a dia)
       (etapa ? jornada + consulta : consulta + jornada) +
       '<div class="jr-extra">' + cartaoComissao() + cartaoCampus() + "</div>"
@@ -948,7 +967,8 @@
       '<ol class="guia"><li>Clique nos botões abaixo e peça a afiliação. Se ainda não tiver conta na Cakto, ela pede para você criar. A aprovação é automática.<span class="guia-acts">' + botoesConvite(paginaPronta() ? "" : " gold") + "</span></li>" +
       "<li>Na Cakto, abra <b>Produtos › Minhas Afiliações</b> e, no produto, clique em <b>Ver Links</b>. O Mensal se chama <b>LowLab Campus</b> e o Vitalício, <b>LowLab Vitalício</b>.</li>" +
       "<li>Copie o link completo de cada plano e cole no campo certo aqui embaixo, junto com seu apelido.</li></ol>" +
-      (matKey("afiliacao") ? '<p class="hint" style="font-size:14px;margin:0">Dúvida? <button class="link inline" type="button" data-ler="' + esc(matKey("afiliacao").id) + '">Veja o passo a passo completo da afiliação</button>.</p>' : "") + "</div>" +
+      '<p class="hint" style="font-size:14px;margin:0">Dúvida? ' + (matKey("afiliacao") ? '<button class="link inline" type="button" data-ler="' + esc(matKey("afiliacao").id) + '">Veja o passo a passo completo da afiliação</button> ou ' : "") +
+      '<a href="' + esc(linkAjuda()) + '" target="_blank" rel="noopener">chame o Bruno no WhatsApp, ' + esc(AJUDA_FONE) + "</a>.</p></div>" +
       (link ? '<div class="panel"><p class="eyebrow">Seu endereço para divulgar</p><div class="copy-row"><span>' + esc(link) + '</span><a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir ↗</a><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div></div>' : "") +
       '<form class="panel" id="fPagina" novalidate><div class="grid2"><div><label for="pNome">Seu nome na página</label><input id="pNome" type="text" maxlength="60" value="' + esc(a.display_name || (st.profile && st.profile.full_name) || "") + '" placeholder="Ex.: Ana Souza"><p class="hint">Aparece discretamente na página como quem indicou.</p></div>' +
       '<div><label for="pSlug">Apelido do endereço</label><input id="pSlug" type="text" maxlength="30" value="' + esc(a.slug || "") + '" placeholder="ex.: ana-souza"><p class="hint">' + esc(SITE) + '/p/<b id="slugPrev">' + esc(a.slug || "seu-apelido") + "</b> · letras minúsculas, números e hífen</p></div></div>" +
@@ -1152,7 +1172,8 @@
       '<form class="panel" id="fConta" novalidate style="max-width:520px"><h3>Trocar senha</h3>' +
       '<label for="nSenha1">Nova senha</label><input id="nSenha1" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo de 8 caracteres">' +
       '<label for="nSenha2">Repita a nova senha</label><input id="nSenha2" type="password" autocomplete="new-password" minlength="8" placeholder="Digite a mesma senha">' +
-      '<button class="btn gold" id="bTrocar" type="submit">Salvar nova senha</button><p class="msg" id="mConta" role="status"></p></form>'
+      '<button class="btn gold" id="bTrocar" type="submit">Salvar nova senha</button><p class="msg" id="mConta" role="status"></p></form>' +
+      '<div style="max-width:520px;margin-top:16px">' + ajudaHtml() + "</div>"
     );
     $("fConta").addEventListener("submit", async function (ev) {
       ev.preventDefault();
