@@ -113,7 +113,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 .guia b{color:var(--cream)}
 .guia-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .nav a .nb[hidden]{display:none}
-.nav a .nb{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:999px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;background:rgba(224,201,157,.16);color:var(--goldl);vertical-align:middle}
+.nav a[data-nav=material]{white-space:nowrap}
+.nav a .nb{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;background:rgba(224,201,157,.16);color:var(--goldl);vertical-align:middle}
 .copy-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,.28);border:1px solid var(--line2);font-weight:700;word-break:break-all}
 .copy-row span{flex:1;min-width:180px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
