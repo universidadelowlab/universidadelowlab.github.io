@@ -324,7 +324,7 @@
           desc: "São 5 regras. Quem descumpre recebe uma advertência e, na segunda vez, sai do programa.",
           passos: [
             "Nunca prometa ganho, renda ou prazo de resultado.",
-            "Não use “LowLab” no nome do perfil, no @, em página ou em domínio seu. Na bio, pode escrever “afiliado LowLab”.",
+            "Não use “LowLab” no nome do perfil, no @, em página ou em domínio seu.",
             "Sem spam, sem dados de alunos e sem número de resultado além do oficial."
           ],
           pronto: "Você leu as regras inteiras e sabe o que nunca dizer.",
@@ -524,10 +524,10 @@
         },
         {
           id: "whats", titulo: "Deixe o WhatsApp pronto", tempo: "10 min",
-          desc: "Respostas rápidas salvas economizam horas por semana.",
+          desc: "É por ele que você fecha as vendas da live: no fim de cada live, você passa esse número.",
           passos: [
             "Use o WhatsApp Business e coloque o link da sua página no perfil comercial.",
-            "Salve as mensagens prontas como respostas rápidas: o que é, link, preço e comprei."
+            "Salve as mensagens prontas como respostas rápidas: depois da live, o que é, link, preço e comprei."
           ],
           pronto: "As respostas rápidas estão salvas.",
           acoes: [{ t: "mat", k: "mensagens", l: "Ver mensagens prontas" }]
@@ -631,21 +631,22 @@
           passos: [
             "30 minutos antes: avise nos stories, ative o Não perturbe e teste câmera e som.",
             "Ao começar, ative a divulgação de conteúdo comercial (se o app oferecer) e fixe o comentário: “Link na bio: veja a plataforma por dentro e faça a sua simulação na aba Simule.”",
-            "Fale o CTA do link da bio a cada 5 a 10 minutos e sempre que chegar gente nova."
+            "Fale o CTA do link da bio a cada 5 a 10 minutos e sempre que chegar gente nova.",
+            "No fim, passe o seu WhatsApp: quem chamar recebe o seu link de pagamento, e quem vai comprar tem prioridade."
           ],
-          pronto: "Live feita do começo ao fim, com o CTA em todos os blocos.",
+          pronto: "Live feita do começo ao fim, com o CTA em todos os blocos e o seu WhatsApp no final.",
           acoes: [{ t: "mat", k: "live_roteiro", l: "Abrir o roteiro" }]
         },
         {
           id: "pos_live", titulo: "Aproveite a live depois que ela acabar", tempo: "40 min",
           desc: "Uma live rende conteúdo para a semana inteira.",
           passos: [
-            "Responda todos os directs no mesmo dia.",
+            "Responda o WhatsApp no mesmo dia: primeiro quem quer comprar, com o seu link de pagamento; depois, as dúvidas e os directs.",
             "Anote o pico de pessoas, os novos seguidores, as perguntas que mais apareceram e as vendas do dia na Cakto.",
             "Corte os 3 melhores momentos no Opus Clip e programe para os próximos dias."
           ],
-          pronto: "Directs respondidos, números anotados e 3 cortes prontos.",
-          acoes: [{ t: "mat", k: "opus", l: "Como fazer cortes" }]
+          pronto: "WhatsApp e directs respondidos, números anotados e 3 cortes prontos.",
+          acoes: [{ t: "mat", k: "mensagens", l: "Mensagens prontas" }, { t: "mat", k: "opus", l: "Como fazer cortes" }]
         }
       ]
     },
@@ -703,7 +704,7 @@
     });
     return { total: total, feitas: feitas, atual: atual };
   }
-  function bioPronta(a) { return "Low ticket na prática | afiliado LowLab\n" + SITE_CURTO + "/p/" + ((a && a.slug) || "seu-apelido"); }
+  function bioPronta(a) { return "Low ticket do zero | veja a plataforma ↓\n" + SITE_CURTO + "/p/" + ((a && a.slug) || "seu-apelido"); }
 
   function acaoHtml(x, destaque) {
     var cls = "btn small" + (destaque ? " gold" : "");
