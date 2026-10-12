@@ -26,7 +26,9 @@
   var AJUDA_WHATS = "5511952030011";
   var AJUDA_FONE = "(11) 95203-0011";
   var COLS_AFF = "user_id,status,slug,display_name,link_campus,link_circulo,created_at";
-  var VISTAS = ["inicio", "pagina", "aulas", "conta", "admin"];
+  var VISTAS = ["inicio", "pagina", "cortes", "aulas", "conta", "admin"];
+  // Opus Clip: o app não aceita o link do vídeo pelo endereço, então o botão copia o link e abre o painel para colar.
+  var OPUS_APP = "https://clip.opus.pro/dashboard";
   var ICO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var ICO_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.4-4A8 8 0 1 1 20 11.5z"/><path d="M9 10.5h6M9 13.5h4"/></svg>';
   var ICO_TEMPO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
@@ -286,7 +288,7 @@
     if (v === "aulas" && document.querySelector('[data-nav="aulas"]').hidden) v = "inicio";
     document.querySelectorAll("[data-nav]").forEach(function (a) { a.classList.toggle("active", a.getAttribute("data-nav") === v); });
     $("side").classList.remove("open");
-    var f = { inicio: telaInicio, pagina: telaPagina, aulas: telaAulas, conta: telaConta, admin: telaAdmin }[v];
+    var f = { inicio: telaInicio, pagina: telaPagina, cortes: telaCortes, aulas: telaAulas, conta: telaConta, admin: telaAdmin }[v];
     f();
     window.scrollTo(0, 0);
     if (ancora) setTimeout(function () { irPara(ancora); }, 60);
@@ -746,13 +748,13 @@
     var nome = esc(primeiroNome());
     var titulo = !etapa ? "Jornada completa, " + nome : pr.feitas === 0 ? "Boas-vindas à parceria, " + nome : "Seu próximo passo, " + nome;
     var jornada = '<div class="jr-etapas" id="sec-jornada">' + JORNADA.map(function (e, i) { return etapaHtml(e, i, a, ck, pr, prox); }).join("") + "</div>";
-    var consulta = consultaRapida() + videosCortes();
+    var consulta = consultaRapida();
+    var chip = function (id, txt) { return '<button class="chip" type="button" data-ir="' + id + '">' + txt + "</button>"; };
     render(
       '<div class="page-head"><p class="eyebrow">Sua jornada de parceiro</p><h1>' + titulo + '<span class="dot">.</span></h1>' +
-      "<p>São 8 etapas, do cadastro à rotina de vendas. Cada tarefa diz o que fazer, quanto tempo leva e quando está pronta. Marque ao terminar: o progresso fica salvo na sua conta. Os textos prontos e os vídeos para cortes ficam na Consulta rápida.</p></div>" +
-      '<div class="jr-atalhos"><span>Ir para:</span>' + [["sec-jornada", "Jornada"], ["sec-consulta", "Consulta rápida"], ["sec-videos", "Vídeos para cortes"], ["sec-ganhos", "Quanto você ganha"]].map(function (x) {
-        return '<button class="chip" type="button" data-ir="' + x[0] + '">' + x[1] + "</button>";
-      }).join("") + "</div>" +
+      "<p>São 8 etapas, do cadastro à rotina de vendas. Cada tarefa diz o que fazer, quanto tempo leva e quando está pronta. Marque ao terminar: o progresso fica salvo na sua conta. Os textos prontos ficam na Consulta rápida, nesta página, e os vídeos oficiais, na aba Vídeos para cortes.</p></div>" +
+      '<div class="jr-atalhos"><span>Ir para:</span>' + chip("sec-jornada", "Jornada") + chip("sec-consulta", "Consulta rápida") +
+      '<a class="chip" href="#cortes">Vídeos para cortes</a>' + chip("sec-ganhos", "Quanto você ganha") + "</div>" +
       (!a ? '<div class="jr-aviso">Você está vendo a jornada como administrador, sem conta de parceiro. O progresso fica salvo só neste navegador.</div>' : "") +
       topoJornada(pr, etapa, prox, a) +
       (paginaPronta() ? linhaLink() : "") +
@@ -891,15 +893,36 @@
     return '<button class="cr-item' + (lido ? " lido" : "") + '" type="button" data-ler="' + esc(m.id) + '"><span class="cr-ico">' + (lido ? ICO_CHECK : ICONE.text) + "</span>" +
       '<span class="cr-txt"><b>' + esc(m.title) + "</b>" + (r ? "<small>" + esc(r) + "</small>" : "") + '</span><span class="cr-min">' + (lido ? "Lido" : minutos(m.body) + " min") + "</span></button>";
   }
-  function videosCortes() {
+  // ---------- Vídeos para cortes (aba própria no menu) ----------
+  // Cada vídeo é um material da seção "videos", do tipo Link, com o link do YouTube (Administração › Textos e vídeos).
+  function telaCortes() {
     var videos = st.materials.filter(function (m) { return m.active && secaoDe(m) === "videos" && m.url; });
     var guia = matKey("opus");
-    return '<section class="jr-sec" id="sec-videos"><div class="jr-sec-head"><div><p class="eyebrow">Conteúdo pronto</p><h2>Vídeos para cortes</h2>' +
-      "<p>Copie o link do vídeo e cole no Opus Clip para gerar seus cortes. Nos cortes, dê o crédito a quem aparece no vídeo.</p></div>" +
-      (guia ? '<button class="btn small" type="button" data-ler="' + esc(guia.id) + '">Como fazer cortes</button>' : "") + "</div>" +
-      (videos.length ? '<div class="mat-list">' + videos.map(linhaMaterial).join("") + "</div>"
-        : '<div class="mat-vazio"><p><b>Em breve:</b> o vídeo do Bruno contando a história dele. Quando chegar, ele aparece aqui com o botão Copiar link, para colar no Opus Clip.</p></div>') +
-      "</section>";
+    render(
+      '<div class="page-head"><p class="eyebrow">Conteúdo pronto</p><h1>Vídeos para cortes<span class="dot">.</span></h1>' +
+      "<p>Vídeos oficiais da LowLab para você transformar em cortes. Toque em <b>Abrir Opus Clip</b>: o link do vídeo já vai copiado e o Opus Clip abre em outra aba, é só colar. Nos cortes, dê o crédito a quem aparece no vídeo.</p>" +
+      (guia ? '<div class="vc-guia"><button class="btn small" type="button" data-ler="' + esc(guia.id) + '">Como fazer cortes</button></div>' : "") + "</div>" +
+      (videos.length ? '<div class="vc-lista">' + videos.map(cartaoVideo).join("") + "</div>"
+        : '<div class="mat-vazio"><p><b>Nenhum vídeo por enquanto.</b> Quando a LowLab publicar um vídeo para cortes, ele aparece aqui.</p></div>')
+    );
+    document.querySelectorAll("#conteudo [data-ler]").forEach(function (b) { b.addEventListener("click", function () { lerMaterial(b.getAttribute("data-ler")); }); });
+    document.querySelectorAll("#conteudo [data-opus]").forEach(function (a) { a.addEventListener("click", function () { copiarParaOpus(a.getAttribute("data-opus")); }); });
+    ligarCopiar();
+  }
+  function cartaoVideo(m) {
+    var yid = youtubeId(m.url), r = resumoDe(m);
+    return '<article class="vc' + (yid ? "" : " sem-player") + '">' +
+      (yid ? '<div class="video"><iframe src="https://www.youtube-nocookie.com/embed/' + yid + '?rel=0" title="' + esc(m.title) + '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>' : "") +
+      '<div class="vc-info"><h3>' + esc(m.title) + "</h3>" + (r ? "<p>" + esc(r) + "</p>" : "") +
+      '<div class="vc-acts"><button class="btn small" type="button" data-copiar="' + esc(m.url) + '">Copiar link</button>' +
+      '<a class="btn small gold" href="' + OPUS_APP + '" target="_blank" rel="noopener" data-opus="' + esc(m.url) + '">Abrir Opus Clip ↗</a></div>' +
+      '<p class="vc-dica">O link do vídeo já vai copiado: no Opus Clip, é só colar.</p></div></article>';
+  }
+  // Copia o link no mesmo toque que abre o Opus Clip; o próprio link do botão abre a nova aba.
+  function copiarParaOpus(url) {
+    var falhou = function () { toast("Não deu para copiar sozinho: use o botão Copiar link."); };
+    try { navigator.clipboard.writeText(url).then(function () { toast("Link do vídeo copiado. No Opus Clip, é só colar."); }, falhou); }
+    catch (e) { falhou(); }
   }
 
   function ligarJornada() {
@@ -1152,20 +1175,6 @@
     return html;
   }
   // [fmt-end]
-  function linhaMaterial(m) {
-    var r = resumoDe(m), txt = '<span class="mat-txt"><b>' + esc(m.title) + "</b>" + (r ? "<small>" + esc(r) + "</small>" : "") + "</span>";
-    if (secaoDe(m) === "videos" && m.kind === "link" && m.url) {
-      return '<div class="mat-row mat-video"><span class="mat-ico">' + ICONE.video + "</span>" + txt +
-        '<span class="mat-acts"><button class="btn small gold" type="button" data-copiar="' + esc(m.url) + '">Copiar link</button><a class="btn small" href="' + esc(m.url) + '" target="_blank" rel="noopener">Assistir ↗</a></span></div>';
-    }
-    if (m.kind !== "text" && m.url) {
-      return '<a class="mat-row link" href="' + esc(m.url) + '" target="_blank" rel="noopener"' + (m.key === "convite_mensal" ? ' data-convite="campus"' : m.key === "convite_vitalicio" ? ' data-convite="circulo"' : "") + '><span class="mat-ico">' + (ICONE[m.kind] || ICONE.link) + "</span>" + txt +
-        '<span class="mat-go">' + (m.kind === "file" ? "Baixar" : "Abrir") + " ↗</span></a>";
-    }
-    var lido = lidoMat(m);
-    return '<button class="mat-row' + (lido ? " lido" : "") + '" type="button" data-ler="' + esc(m.id) + '"><span class="mat-ico">' + (lido ? ICO_CHECK : ICONE.text) + "</span>" + txt +
-      '<span class="mat-go"><em>' + minutos(m.body) + " min</em>" + (lido ? '<span class="mat-lido">Lido</span>' : "Ler →") + "</span></button>";
-  }
   function lerMaterial(id) {
     var m = st.materials.filter(function (x) { return x.id === id; })[0]; if (!m) return;
     var s = SECOES.filter(function (x) { return x.id === secaoDe(m); })[0];
@@ -1206,7 +1215,7 @@
   var adminAba = "afiliados";
   async function telaAdmin() {
     if (!ehAdmin()) { location.hash = "inicio"; return; }
-    render('<div class="page-head"><p class="eyebrow">Só para você</p><h1>Administração<span class="dot">.</span></h1><p>Afiliados, aulas e os textos e vídeos da Área de Parceiros (Consulta rápida e jornada).</p></div>' +
+    render('<div class="page-head"><p class="eyebrow">Só para você</p><h1>Administração<span class="dot">.</span></h1><p>Afiliados, aulas e os textos e vídeos da Área de Parceiros (Consulta rápida, jornada e Vídeos para cortes).</p></div>' +
       '<div class="chips">' + [["afiliados", "Afiliados"], ["aulas", "Aulas"], ["material", "Textos e vídeos"]].map(function (t) {
         return '<button class="chip' + (adminAba === t[0] ? " active" : "") + '" data-aba="' + t[0] + '">' + t[1] + "</button>";
       }).join("") + '</div><div id="adminCorpo"><div class="loader" style="margin:30px auto"></div></div>');
