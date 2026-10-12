@@ -301,6 +301,8 @@
   // Cada tarefa: o que fazer (desc), como fazer (passos), quando está pronta (pronto) e os atalhos (acoes).
   // auto(a, ck): conclui sozinha (dados da página ou material aberto). soAuto: não dá para marcar à mão.
   function lido(k) { return function (a, ck) { return !!ck["m_" + k]; }; }
+  // Lista do filtro de palavras dos comentários da live (TikTok: uma por vez; Instagram: cola tudo em Palavras ocultas)
+  var LISTA_FILTRO = "golpe, golpista, golpistas, enganação, enganacao, estelionato, fraude, pirâmide, piramide, esquema, fake, mentira, mentiroso, picareta, charlatão, charlatao, vigarista, ladrão, ladrao, roubo, lixo, não compra, nao compra, não comprem, nao comprem, não vale a pena, nao vale a pena, perda de tempo, dinheiro jogado fora, olha meu perfil, chama no meu perfil, link no meu perfil, link na minha bio, segue meu perfil";
   var JORNADA = [
     {
       id: "e1", titulo: "Boas-vindas à parceria", tempo: "15 min",
@@ -324,7 +326,7 @@
           desc: "São 5 regras. Quem descumpre recebe uma advertência e, na segunda vez, sai do programa.",
           passos: [
             "Nunca prometa ganho, renda ou prazo de resultado.",
-            "Não use “LowLab” no nome do perfil, no @, em página ou em domínio seu.",
+            "Não use “LowLab” no nome do perfil nem no @, e não coloque link da LowLab no seu perfil.",
             "Sem spam, sem dados de alunos e sem número de resultado além do oficial."
           ],
           pronto: "Você leu as regras inteiras e sabe o que nunca dizer.",
@@ -485,7 +487,7 @@
     },
     {
       id: "e5", titulo: "Perfil pronto para vender", tempo: "30 min",
-      sub: "Quem chega no seu perfil precisa entender em 3 segundos o que você faz e onde clicar.",
+      sub: "Quem chega no seu perfil precisa entender em 3 segundos o que você faz. Sem link da LowLab: quem quiser comprar fala com você no privado.",
       tarefas: [
         {
           id: "perfil", titulo: "Ajuste nome, foto e conta profissional", tempo: "10 min",
@@ -499,34 +501,33 @@
           acoes: [{ t: "mat", k: "perfil", l: "Ver o checklist do perfil" }]
         },
         {
-          id: "bio", titulo: "Cole a sua bio", tempo: "5 min",
-          desc: "A bio abaixo já vem com o seu endereço. Prefere outra versão? Veja as 3 da Bio pronta.",
-          extra: function (a) { return fmtSnip(bioPronta(a)); },
+          id: "bio_frase", titulo: "Escreva a sua bio", tempo: "5 min",
+          desc: "Uma frase sua: motivadora, ou dizendo que você vende infoproduto ou vive do digital. Sem link da LowLab.",
+          extra: function () { return fmtSnip("Um dia de execução por vez.\nLives de segunda a sexta, 20h."); },
           passos: [
-            "Copie a bio e cole no Instagram, no TikTok e nas outras redes.",
-            "Se a rede ainda não deixar o link clicável, deixe o endereço escrito e mande o link no direct quando pedirem."
+            "Escolha uma frase dos exemplos ou escreva a sua no mesmo estilo. Use só o que for verdade para você.",
+            "Se a sua live tem horário fixo, coloque numa segunda linha.",
+            "Use a mesma bio no Instagram, no TikTok e nas outras redes. Nada de número ou promessa de ganho."
           ],
-          pronto: "A bio está igual em todas as redes.",
-          acoes: [{ t: "mat", k: "bio", l: "Ver as 3 versões" }]
+          pronto: "A bio está igual em todas as redes, sem link da LowLab.",
+          acoes: [{ t: "mat", k: "bio", l: "Ver exemplos de frase" }]
         },
         {
-          id: "link_bio", titulo: "Coloque o link da sua página no perfil", tempo: "5 min",
-          desc: "É para lá que você manda todo mundo: “o link está na minha bio”.",
+          id: "sem_link", titulo: "Confira: nenhum link da LowLab no perfil", tempo: "5 min",
+          desc: "A sua página e os links de pagamento vão só no privado, para quem pedir. Assim você fica livre para vender, e o suporte fica com a LowLab.",
           passos: [
-            "Instagram: Editar perfil › Links › Adicionar link externo.",
-            "TikTok: Editar perfil › Site. Se a opção ainda não aparecer, deixe o endereço escrito na bio.",
-            "Teste o link no celular de outra pessoa."
+            "Instagram: abra Editar perfil › Links. Se tiver o link da sua página ou da LowLab, remova.",
+            "TikTok: abra Editar perfil › Site e faça o mesmo.",
+            "WhatsApp: confira se o perfil não tem link da LowLab."
           ],
-          pronto: "O link abre a sua página nas duas redes.",
-          acoes: function (a) {
-            return a && a.slug ? [{ t: "copiar", x: SITE + "/p/" + a.slug, l: "Copiar meu link" }] : [{ t: "nav", h: "#pagina", l: "Configurar minha página" }];
-          }
+          pronto: "Nenhum link da LowLab na bio, no campo de link e no WhatsApp.",
+          acoes: [{ t: "mat", k: "perfil", l: "Ver o checklist do perfil" }]
         },
         {
           id: "whats", titulo: "Deixe o WhatsApp pronto", tempo: "10 min",
           desc: "É por ele que você fecha as vendas da live: no fim de cada live, você passa esse número.",
           passos: [
-            "Use o WhatsApp Business e coloque o link da sua página no perfil comercial.",
+            "Use o WhatsApp Business ou o normal, com a sua foto e o seu nome, sem link da LowLab no perfil.",
             "Salve as mensagens prontas como respostas rápidas: depois da live, o que é, link, preço e comprei."
           ],
           pronto: "As respostas rápidas estão salvas.",
@@ -550,7 +551,7 @@
           desc: "Estrutura de 30 segundos: gancho em 2 segundos, o ponto em 20 e a chamada em 5.",
           passos: [
             "Grave na vertical, com luz de frente e o celular na altura dos olhos.",
-            "Comece direto pelo gancho e termine com “o link está na minha bio”.",
+            "Comece direto pelo gancho e termine com a chamada: “me chama no direct” ou “comenta quero”.",
             "Poste o mesmo vídeo no TikTok, no Reels e no Shorts."
           ],
           pronto: "3 vídeos no ar nas três redes.",
@@ -607,12 +608,24 @@
           acoes: [{ t: "mat", k: "live_checklist", l: "Abrir o checklist da live" }]
         },
         {
+          id: "filtro", titulo: "Ative o filtro de palavras dos comentários", tempo: "10 min",
+          desc: "Tem gente que entra na live só para atrapalhar, escrevendo “golpe” ou “não vale a pena”. Com o filtro, esses comentários somem sozinhos.",
+          extra: function () { return fmtSnip(LISTA_FILTRO); },
+          passos: [
+            "TikTok: na tela de abrir a LIVE, toque em Configurações e procure o filtro de palavras-chave dos comentários. Adicione as palavras da lista, uma por vez. Se aparecer a opção de filtrar palavras parecidas, ative.",
+            "Instagram: no seu perfil, toque em ☰ e abra Palavras ocultas. Em palavras e frases personalizadas, cole a lista.",
+            "Escolha alguém de confiança como moderador da live: ele pode silenciar e bloquear quem atrapalha."
+          ],
+          pronto: "O filtro está ligado no TikTok e no Instagram, com a lista salva.",
+          acoes: [{ t: "copiar", x: LISTA_FILTRO, l: "Copiar a lista" }, { t: "mat", k: "live_checklist", l: "Abrir o checklist da live" }]
+        },
+        {
           id: "live_ensaio", titulo: "Ensaie o roteiro de 60 minutos", tempo: "30 min",
           desc: "O roteiro é para quem está começando do zero: linguagem simples e o que falar e mostrar em cada bloco, minuto a minuto.",
           passos: [
             "Leia o roteiro inteiro uma vez.",
             "Ensaie em voz alta a abertura, a montagem do produto com o chat e o fechamento.",
-            "Decore o CTA: “Clica no link da minha bio, olha a plataforma por dentro e vai na aba Simule.”"
+            "Decore o CTA: “Fica até o fim: eu passo o meu WhatsApp e te mando a plataforma por dentro.”"
           ],
           pronto: "Você faz a abertura, o CTA e o fechamento sem ler.",
           acoes: [{ t: "mat", k: "live_roteiro", l: "Abrir o roteiro" }]
@@ -630,8 +643,8 @@
           desc: "Fale simples, para quem está começando do zero: monte um produto ao vivo com o chat e mostre onde aprender o passo a passo.",
           passos: [
             "30 minutos antes: avise nos stories, ative o Não perturbe e teste câmera e som.",
-            "Ao começar, ative a divulgação de conteúdo comercial (se o app oferecer) e fixe o comentário: “Link na bio: veja a plataforma por dentro e faça a sua simulação na aba Simule.”",
-            "Fale o CTA do link da bio a cada 5 a 10 minutos e sempre que chegar gente nova.",
+            "Ao começar, ative a divulgação de conteúdo comercial (se o app oferecer) e fixe o comentário: “Fica até o fim: eu passo o meu WhatsApp e te mostro a plataforma por dentro.”",
+            "Fale o CTA a cada 5 a 10 minutos e sempre que chegar gente nova.",
             "No fim, passe o seu WhatsApp: quem chamar recebe o seu link de pagamento, e quem vai comprar tem prioridade."
           ],
           pronto: "Live feita do começo ao fim, com o CTA em todos os blocos e o seu WhatsApp no final.",
@@ -704,7 +717,6 @@
     });
     return { total: total, feitas: feitas, atual: atual };
   }
-  function bioPronta(a) { return "Low ticket do zero | veja a plataforma ↓\n" + SITE_CURTO + "/p/" + ((a && a.slug) || "seu-apelido"); }
 
   function acaoHtml(x, destaque) {
     var cls = "btn small" + (destaque ? " gold" : "");
@@ -780,7 +792,7 @@
 
   function linhaLink() {
     var link = linkPagina();
-    return '<div class="panel jr-link"><p class="eyebrow">Seu endereço para divulgar</p><div class="copy-row"><span>' + esc(link) + '</span><a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir ↗</a><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div></div>';
+    return '<div class="panel jr-link"><p class="eyebrow">Sua página · mande no privado, para quem pedir</p><div class="copy-row"><span>' + esc(link) + '</span><a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir ↗</a><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div></div>';
   }
 
   function etapaHtml(e, i, a, ck, pr, prox) {
@@ -970,7 +982,7 @@
       "<li>Copie o link completo de cada plano e cole no campo certo aqui embaixo, junto com seu apelido.</li></ol>" +
       '<p class="hint" style="font-size:14px;margin:0">Dúvida? ' + (matKey("afiliacao") ? '<button class="link inline" type="button" data-ler="' + esc(matKey("afiliacao").id) + '">Veja o passo a passo completo da afiliação</button> ou ' : "") +
       '<a href="' + esc(linkAjuda()) + '" target="_blank" rel="noopener">chame o Bruno no WhatsApp, ' + esc(AJUDA_FONE) + "</a>.</p></div>" +
-      (link ? '<div class="panel"><p class="eyebrow">Seu endereço para divulgar</p><div class="copy-row"><span>' + esc(link) + '</span><a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir ↗</a><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div></div>' : "") +
+      (link ? '<div class="panel"><p class="eyebrow">Sua página · mande no privado, para quem pedir</p><div class="copy-row"><span>' + esc(link) + '</span><a class="btn small" href="' + esc(link) + '" target="_blank" rel="noopener">Abrir ↗</a><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div></div>' : "") +
       '<form class="panel" id="fPagina" novalidate><div class="grid2"><div><label for="pNome">Seu nome na página</label><input id="pNome" type="text" maxlength="60" value="' + esc(a.display_name || (st.profile && st.profile.full_name) || "") + '" placeholder="Ex.: Ana Souza"><p class="hint">Aparece discretamente na página como quem indicou.</p></div>' +
       '<div><label for="pSlug">Apelido do endereço</label><input id="pSlug" type="text" maxlength="30" value="' + esc(a.slug || "") + '" placeholder="ex.: ana-souza"><p class="hint">' + esc(SITE) + '/p/<b id="slugPrev">' + esc(a.slug || "seu-apelido") + "</b> · letras minúsculas, números e hífen</p></div></div>" +
       '<p class="eyebrow" style="margin-top:22px">Seus links de afiliado da Cakto</p><p class="hint" style="font-size:14px">Na Cakto: Produtos › Minhas Afiliações › produto › Ver Links. Copie o link completo, que começa com https://pay.cakto.com.br/.</p>' +
