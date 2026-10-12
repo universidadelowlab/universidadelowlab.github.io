@@ -210,6 +210,7 @@ section{padding:120px 0;position:relative}
 input[type=range]{--p:50%;display:block;width:100%;height:34px;margin:0;-webkit-appearance:none;appearance:none;background:linear-gradient(90deg,#cfae73 0,#cfae73 var(--p),rgba(255,255,255,.12) var(--p),rgba(255,255,255,.12) 100%) center/100% 4px no-repeat;outline:none;touch-action:none}
 .rng input[type=range]{pointer-events:none}
 input[type=range]:focus-visible{outline:2px solid rgba(213,189,145,.5);outline-offset:2px;border-radius:8px}
+.rng.ptr input[type=range]:focus-visible{outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:linear-gradient(180deg,#f0dcb0,#cfae73);box-shadow:0 0 0 5px rgba(213,189,145,.2);transition:box-shadow .2s}
 .rng.drag input[type=range]::-webkit-slider-thumb{box-shadow:0 0 0 9px rgba(213,189,145,.26)}
 input[type=range]::-moz-range-thumb{width:24px;height:24px;border:0;border-radius:50%;background:#d5bd91}
@@ -778,10 +779,13 @@ mt.addEventListener('input',()=>{step(5);calc()});
 // (o controle nativo não recebe o toque, então não há conflito no iPhone, no Android nem nos navegadores dos apps; o teclado continua funcionando)
 function dragRange(el){
   const box=el.parentElement;
+  // contorno de foco só para quem usa o teclado
+  el.addEventListener('keydown',()=>box.classList.remove('ptr'));
   box.addEventListener('pointerdown',e=>{
     if(e.pointerType==='mouse'&&e.button!==0)return;
     e.preventDefault();
-    el.focus({preventScroll:true});
+    box.classList.add('ptr');
+    el.focus({preventScroll:true,focusVisible:false});
     try{box.setPointerCapture(e.pointerId)}catch(_){}
     box.classList.add('drag');
     const id=e.pointerId;
