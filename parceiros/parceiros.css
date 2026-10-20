@@ -432,3 +432,22 @@ a.mat-row{font-weight:400;line-height:1.5}
 .eq-aviso{margin:-4px 0 16px;padding:10px 14px;border-radius:12px;border:1px solid rgba(224,201,157,.35);background:rgba(199,166,106,.1);color:var(--muted);font-size:14px}
 .eq-aviso b{color:var(--cream)}
 #sec-equipe{margin-top:22px}
+
+/* equipe: recado e vendas (20/10/2026) */
+.eq-recado{margin:0 0 16px;border-color:rgba(224,201,157,.35)}
+.eq-recado-txt{margin:0;line-height:1.6;overflow-wrap:anywhere}
+.eq-recado-dica{margin:0 0 4px}
+.eq-recado-acts{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.eq-recado-acts .hint{margin:0}
+#sec-vendas,#sec-recado,#eqComo{margin-top:22px}
+.eq-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.eq-stat{padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.18)}
+.eq-stat span{display:block;font-size:12px;color:var(--muted)}
+.eq-stat b{display:block;font-family:var(--display);font-size:26px;line-height:1.15;margin-top:4px}
+.eq-stat small{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+.eq-alerta{margin:0 0 14px;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,143,128,.35);color:var(--err);font-size:14px}
+#sec-vendas th.num,#sec-vendas td.num{text-align:right}
+#sec-vendas td.num{white-space:nowrap}
+/* tabela larga rola dentro da caixa, sem empurrar a página no celular */
+.shell>*{min-width:0}
+@media (max-width:700px){.eq-stats{grid-template-columns:1fr}}

@@ -284,14 +284,17 @@
   // equipe do parceiro (se entrou pelo link de um master) e equipes que ele lidera (se é master)
   async function carregarEquipes() {
     st.team = null; st.minhas = [];
-    var cols = "id,slug,name,product_campus,product_circulo,active,master_user_id";
+    var cols0 = "id,slug,name,product_campus,product_circulo,active,master_user_id";
+    var cols = cols0 + ",notice,notice_at";
     var t = await sb.from("affiliates").select("team_id").eq("user_id", st.user.id).maybeSingle();
     var tid = !t.error && t.data && t.data.team_id;
     if (tid) {
       var e = await sb.from("affiliate_teams").select(cols).eq("id", tid).maybeSingle();
+      if (e.error) e = await sb.from("affiliate_teams").select(cols0).eq("id", tid).maybeSingle();
       if (!e.error && e.data && e.data.active) st.team = e.data;
     }
     var m = await sb.from("affiliate_teams").select(cols).eq("master_user_id", st.user.id).eq("active", true).order("created_at");
+    if (m.error) m = await sb.from("affiliate_teams").select(cols0).eq("master_user_id", st.user.id).eq("active", true).order("created_at");
     if (!m.error) st.minhas = m.data || [];
   }
 
@@ -787,7 +790,7 @@
       '<div class="jr-atalhos"><span>Ir para:</span>' + chip("sec-jornada", "Jornada") + chip("sec-consulta", "Consulta rápida") +
       '<a class="chip" href="#cortes">Vídeos para cortes</a>' + chip("sec-ganhos", "Quanto você ganha") + "</div>" +
       (!a ? '<div class="jr-aviso">Você está vendo a jornada como administrador, sem conta de parceiro. O progresso fica salvo só neste navegador.</div>' : "") +
-      (st.team ? '<div class="jr-aviso">Você faz parte da <b>' + esc(st.team.name) + '</b>. Na etapa 2, os botões de afiliação já levam aos produtos da equipe.</div>' : "") +
+      (st.team ? '<div class="jr-aviso">Você faz parte da <b>' + esc(st.team.name) + '</b>. Na etapa 2, os botões de afiliação já levam aos produtos da equipe. Quem lidera a equipe acompanha o seu progresso e as suas vendas: para as vendas aparecerem, use na Cakto o mesmo e-mail da sua conta aqui.</div>' + recadoEquipeHtml(st.team) : "") +
       topoJornada(pr, etapa, prox, a) +
       (paginaPronta() ? linhaLink() : "") +
       ajudaHtml() +
@@ -1105,6 +1108,25 @@
   }
   function linkEquipe(t) { return SITE + "/parceiros/?equipe=" + t.slug + "#cadastro"; }
 
+  // recado do master: texto simples; só links https viram link
+  function textoComLinks(s) {
+    return String(s || "").split(/(https:\/\/[^\s<>"']+)/g).map(function (p, i) {
+      if (!(i % 2)) return esc(p);
+      var u = p.replace(/[.,;:!?)]+$/, "");
+      return '<a href="' + esc(u) + '" target="_blank" rel="noopener nofollow">' + esc(u) + "</a>" + esc(p.slice(u.length));
+    }).join("").replace(/\n/g, "<br>");
+  }
+  function dataHora(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+  function recadoEquipeHtml(t) {
+    if (!t || !t.notice) return "";
+    return '<div class="panel eq-recado"><p class="eyebrow">Recado da ' + esc(t.name) + '</p><p class="eq-recado-txt">' + textoComLinks(t.notice) + "</p>" +
+      (t.notice_at ? '<p class="hint">Publicado em ' + dataHora(t.notice_at) + "</p>" : "") + "</div>";
+  }
+
   async function telaEquipe() {
     var t = st.minhas[0];
     if (!t) { location.hash = "inicio"; return; }
@@ -1114,15 +1136,20 @@
       "<p>Quem se cadastra pelo seu link entra na sua equipe e vende pelos produtos da equipe, com os mesmos 50% de comissão de qualquer parceiro. Você recebe 12,5% do valor de cada venda da equipe (já sem a taxa da Cakto), direto na sua conta da Cakto, como coprodutor dos dois produtos da equipe. O contrato de coprodução é de 6 meses e pode ser renovado.</p></div>" +
       '<div class="panel"><p class="eyebrow">Seu link de cadastro · mande para quem vai entrar na sua equipe</p><div class="copy-row"><span>' + esc(link) + '</span><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div>' +
       '<p class="hint">Quem já vende pelos produtos normais da LowLab continua onde está: o link vale para quem está começando.</p></div>' +
-      '<div class="panel"><p class="eyebrow">Como funciona</p><ol class="guia">' +
+      '<section class="jr-sec" id="sec-vendas"><div class="jr-sec-head"><div><p class="eyebrow">Atualiza a cada venda confirmada</p><h2>Vendas da equipe</h2></div></div><div id="eqVendas"><div class="loader" style="margin:24px auto"></div></div></section>' +
+      recadoMasterHtml(t) +
+      '<section class="jr-sec" id="sec-equipe"><div class="jr-sec-head"><div><p class="eyebrow">Sua equipe</p><h2>Parceiros</h2></div></div><div id="eqLista"><div class="loader" style="margin:24px auto"></div></div></section>' +
+      '<div class="panel" id="eqComo"><p class="eyebrow">Como funciona</p><ol class="guia">' +
       "<li>A pessoa se cadastra pelo seu link e recebe o e-mail para criar a senha da Área de Parceiros.</li>" +
       "<li>Na etapa 2 da jornada, ela pede a afiliação nos dois produtos da equipe. A LowLab aprova o pedido.</li>" +
-      "<li>Daí para frente, ela segue a jornada normal: página de vendas, conteúdo e lives. Acompanhe o progresso de cada um aqui embaixo.</li>" +
-      "<li>Você ganha só sobre as vendas do curso feitas pela equipe. Ninguém paga para entrar na equipe e você não ganha nada por cadastro.</li></ol></div>" +
-      '<section class="jr-sec" id="sec-equipe"><div class="jr-sec-head"><div><p class="eyebrow">Sua equipe</p><h2>Parceiros</h2></div></div><div id="eqLista"><div class="loader" style="margin:24px auto"></div></div></section>'
+      "<li>Daí para frente, ela segue a jornada normal: página de vendas, conteúdo e lives. O progresso e as vendas de cada um aparecem nesta página.</li>" +
+      "<li>Você ganha só sobre as vendas do curso feitas pela equipe. Ninguém paga para entrar na equipe e você não ganha nada por cadastro.</li></ol></div>"
     );
     ligarCopiar();
-    var r = await sb.rpc("lowlab_my_team");
+    ligarRecado(t);
+    var res = await Promise.all([sb.rpc("lowlab_my_team"), sb.rpc("lowlab_my_team_sales")]);
+    mostrarVendasEquipe(res[1]);
+    var r = res[0];
     var el = $("eqLista"); if (!el) return;
     if (r.error) { el.innerHTML = '<div class="empty">Não foi possível carregar a sua equipe agora. Tente de novo em instantes.</div>'; return; }
     var lista = r.data || [];
@@ -1138,6 +1165,63 @@
         "<td>" + (x.tem_mensal ? '<span class="badge ok">Mensal</span> ' : "") + (x.tem_vitalicio ? '<span class="badge ok">Vitalício</span>' : "") + (!x.tem_mensal && !x.tem_vitalicio ? "<small>ainda não</small>" : "") + "</td>" +
         "<td><small>" + new Date(x.desde).toLocaleDateString("pt-BR") + "</small></td></tr>";
     }).join("") + "</tbody></table></div>";
+  }
+
+  function mostrarVendasEquipe(r) {
+    var el = $("eqVendas"); if (!el) return;
+    if (r.error) { el.innerHTML = '<div class="empty">Não foi possível carregar as vendas agora. Tente de novo em instantes.</div>'; return; }
+    var lista = (r.data || []).map(function (x) {
+      return { nome: x.nome, vm: x.vendas_mes || 0, valm: Number(x.valor_mes) || 0, vt: x.vendas_total || 0, valt: Number(x.valor_total) || 0, pm: Number(x.parte_mes) || 0, pt: Number(x.parte_total) || 0 };
+    });
+    var tot = lista.reduce(function (a, x) { a.vm += x.vm; a.valm += x.valm; a.vt += x.vt; a.pm += x.pm; a.pt += x.pt; return a; }, { vm: 0, valm: 0, vt: 0, pm: 0, pt: 0 });
+    var mes = new Date().toLocaleDateString("pt-BR", { month: "long" });
+    var qtd = function (n) { return n + (n === 1 ? " venda" : " vendas"); };
+    var cards = '<div class="eq-stats">' +
+      '<div class="eq-stat"><span>Vendas da equipe em ' + esc(mes) + "</span><b>" + tot.vm + "</b><small>" + brl(tot.valm) + " vendidos</small></div>" +
+      '<div class="eq-stat"><span>Sua parte em ' + esc(mes) + "</span><b>" + brl(tot.pm) + "</b><small>comissão de coprodução</small></div>" +
+      '<div class="eq-stat"><span>Sua parte desde o início</span><b>' + brl(tot.pt) + "</b><small>" + qtd(tot.vt) + "</small></div></div>";
+    var semParte = tot.vt > 0 && tot.pt === 0
+      ? '<p class="eq-alerta">As vendas estão chegando sem a sua parte. Na Cakto, confira em Produtos › Minhas Co-Produções se você aceitou as duas coproduções da equipe.</p>' : "";
+    var temSemNome = lista.some(function (x) { return x.nome === "Parceiro não identificado"; });
+    var tabela = !tot.vt
+      ? '<div class="mat-vazio"><p><b>Nenhuma venda da equipe ainda.</b> As vendas aparecem aqui assim que a Cakto confirma o pagamento.</p></div>'
+      : '<div class="table-wrap"><table><thead><tr><th>Parceiro</th><th class="num">Vendas em ' + esc(mes) + '</th><th class="num">Vendido em ' + esc(mes) + '</th><th class="num">Vendas no total</th><th class="num">Vendido no total</th></tr></thead><tbody>' +
+        lista.map(function (x) {
+          return "<tr><td><b>" + esc(x.nome) + "</b></td><td class=\"num\">" + x.vm + '</td><td class="num">' + brl(x.valm) + '</td><td class="num">' + x.vt + '</td><td class="num">' + brl(x.valt) + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    el.innerHTML = cards + semParte + tabela +
+      '<p class="hint">Contam as vendas pagas dos produtos da equipe, menos reembolsos e chargebacks; cada mensalidade paga conta como uma venda. "Vendido" é o que o cliente pagou. "Sua parte" é a comissão de coprodução que a Cakto informou em cada venda: o dinheiro cai na sua conta da Cakto, onde fica o valor oficial.' +
+      (temSemNome ? " Parceiro não identificado: a venda veio de alguém da equipe que usa na Cakto um e-mail diferente do da conta na LowLab." : "") + "</p>";
+  }
+
+  function recadoMasterHtml(t) {
+    return '<div class="panel" id="sec-recado"><p class="eyebrow">Recado para a equipe</p>' +
+      '<p class="hint eq-recado-dica">Aparece no Meu espaço de todos da equipe. Use para o horário das lives, a meta da semana ou o link do grupo da equipe. Sem promessa de ganho: número, só com o aviso de resultado individual.</p>' +
+      '<label for="eqRecado">Texto do recado</label><textarea id="eqRecado" maxlength="800" placeholder="Ex.: Live da equipe toda terça, às 20h. Grupo: https://chat.whatsapp.com/...">' + esc(t.notice || "") + "</textarea>" +
+      '<div class="eq-recado-acts"><button class="btn small gold" type="button" id="bRecado">Publicar recado</button>' +
+      '<button class="btn small" type="button" id="bRecadoApagar"' + (t.notice ? "" : " hidden") + ">Apagar recado</button>" +
+      '<span class="hint" id="eqRecadoSt">' + (t.notice_at ? "Publicado em " + dataHora(t.notice_at) : "Nenhum recado publicado.") + "</span></div></div>";
+  }
+  function ligarRecado(t) {
+    var b = $("bRecado"), ap = $("bRecadoApagar"), ta = $("eqRecado");
+    if (!b) return;
+    var salvar = async function (texto, botao) {
+      botao.disabled = true;
+      var r = await sb.rpc("lowlab_set_team_notice", { p_team: t.id, p_text: texto });
+      botao.disabled = false;
+      if (r.error) { toast("Não foi possível salvar o recado. Tente de novo."); return; }
+      t.notice = texto || null; t.notice_at = r.data || null;
+      ta.value = t.notice || "";
+      ap.hidden = !t.notice;
+      $("eqRecadoSt").textContent = t.notice_at ? "Publicado em " + dataHora(t.notice_at) : "Nenhum recado publicado.";
+      toast(t.notice ? "Recado publicado para a equipe." : "Recado apagado.");
+    };
+    b.addEventListener("click", function () {
+      var txt = ta.value.trim();
+      if (!txt) { toast("Escreva o recado antes de publicar."); ta.focus(); return; }
+      salvar(txt, b);
+    });
+    ap.addEventListener("click", function () { salvar("", ap); });
   }
 
   // ---------- Aulas ----------
