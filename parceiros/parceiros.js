@@ -26,7 +26,10 @@
   var AJUDA_WHATS = "5511952030011";
   var AJUDA_FONE = "(11) 95203-0011";
   var COLS_AFF = "user_id,status,slug,display_name,link_campus,link_circulo,created_at";
-  var VISTAS = ["inicio", "pagina", "cortes", "aulas", "conta", "admin"];
+  var VISTAS = ["inicio", "pagina", "cortes", "equipe", "aulas", "conta", "admin"];
+  // Equipes de afiliado master: quem entra pelo link /parceiros/?equipe=apelido se afilia aos produtos da equipe.
+  var EQUIPE_OK = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
+  var CONVITE_BASE = "https://app.cakto.com.br/affiliate/invite/";
   // Opus Clip: o app não aceita o link do vídeo pelo endereço, então o botão copia o link e abre o painel para colar.
   var OPUS_APP = "https://clip.opus.pro/dashboard";
   var ICO_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -35,7 +38,7 @@
 
   var sb = null;
   var st = {
-    user: null, profile: null, aff: null, lessons: [], done: new Set(), materials: [], filtro: "todos",
+    user: null, profile: null, aff: null, lessons: [], done: new Set(), materials: [], filtro: "todos", team: null, minhas: [],
     ck: {}, ckBanco: false, abertas: null, sujo: false, antesModal: null, calc: { m: 0, v: 0, forma: "pix" }
   };
 
@@ -58,9 +61,20 @@
   // marcas antigas guardadas só no navegador (convites clicados antes da jornada)
   function marca(k) { try { return localStorage.getItem("ll_parc_" + k) === "1"; } catch (e) { return false; } }
   function ehAdmin() { return !!(st.profile && st.profile.role === "admin" && st.profile.status === "active"); }
+  // link de afiliação do plano: o da equipe, para quem é de uma equipe; senão, o oficial
+  function conviteDe(p) {
+    var t = st.team, id = t && (p.id === "campus" ? t.product_campus : t.product_circulo);
+    return id ? CONVITE_BASE + id : p.convite;
+  }
+  // textos da jornada para quem é de equipe: a afiliação nos produtos da equipe é aprovada pela LowLab
+  function txtEq(s) {
+    if (!st.team || !s) return s;
+    return String(s).replace(/A aprovação é automática\./g, "A LowLab aprova o pedido, normalmente no mesmo dia.")
+      .replace(/A aprovação é automática/g, "A LowLab aprova o pedido");
+  }
   function botoesConvite(classe) {
     return PLANOS.map(function (p) {
-      return '<a class="btn small' + (classe || "") + '" href="' + esc(p.convite) + '" target="_blank" rel="noopener" data-convite="' + p.id + '">Afiliar ao ' + esc(p.nome) + " ↗</a>";
+      return '<a class="btn small' + (classe || "") + '" href="' + esc(conviteDe(p)) + '" target="_blank" rel="noopener" data-convite="' + p.id + '">Afiliar ao ' + esc(p.nome) + " ↗</a>";
     }).join("");
   }
   function ligarConvites() {
@@ -206,7 +220,7 @@
     try {
       var resp = await fetch(FN_CADASTRO, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: nome, email: email, empresa: $("cEmpresa").value })
+        body: JSON.stringify({ name: nome, email: email, empresa: $("cEmpresa").value, equipe: equipeDoLink() || undefined })
       });
       var j = await resp.json().catch(function () { return {}; });
       if (j.ok) {
@@ -230,7 +244,7 @@
     try {
       var s = await sb.auth.getSession();
       var tok = s.data.session && s.data.session.access_token;
-      var resp = await fetch(FN_CADASTRO, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + tok }, body: "{}" });
+      var resp = await fetch(FN_CADASTRO, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + tok }, body: JSON.stringify(equipeDoLink() ? { equipe: equipeDoLink() } : {}) });
       var j = await resp.json().catch(function () { return {}; });
       if (j.ok) { await carregar(); return; }
       msg(out, j.status === "blocked" ? "Essa conta está bloqueada para parceria. Fale com o suporte." : "Não foi possível ativar agora. Tente de novo.", "err");
@@ -254,15 +268,31 @@
     if (!st.aff && !admin) { $("npEmail").textContent = sess.user.email; views("vNaoParceiro"); return; }
     if (st.aff && st.aff.status === "blocked" && !admin) { views("vBloqueado"); return; }
     carregarCk();
+    await carregarEquipes();
     await carregarConteudo();
     $("whoNome").textContent = (st.profile.full_name || st.aff && st.aff.display_name || "Parceiro");
     $("whoEmail").textContent = sess.user.email;
     $("navAdmin").hidden = !admin;
+    $("navEquipe").hidden = !st.minhas.length;
     document.querySelectorAll("[data-ajuda]").forEach(function (a) { a.href = linkAjuda(); });
     // a página de aulas só aparece quando houver aula publicada (o admin sempre vê, para cadastrar)
     document.querySelector('[data-nav="aulas"]').hidden = !admin && !st.lessons.some(function (x) { return x.active; });
     views("vApp");
     rota();
+  }
+
+  // equipe do parceiro (se entrou pelo link de um master) e equipes que ele lidera (se é master)
+  async function carregarEquipes() {
+    st.team = null; st.minhas = [];
+    var cols = "id,slug,name,product_campus,product_circulo,active,master_user_id";
+    var t = await sb.from("affiliates").select("team_id").eq("user_id", st.user.id).maybeSingle();
+    var tid = !t.error && t.data && t.data.team_id;
+    if (tid) {
+      var e = await sb.from("affiliate_teams").select(cols).eq("id", tid).maybeSingle();
+      if (!e.error && e.data && e.data.active) st.team = e.data;
+    }
+    var m = await sb.from("affiliate_teams").select(cols).eq("master_user_id", st.user.id).eq("active", true).order("created_at");
+    if (!m.error) st.minhas = m.data || [];
   }
 
   async function carregarConteudo() {
@@ -286,9 +316,10 @@
     if (VISTAS.indexOf(v) < 0) v = "inicio";
     if (v === "admin" && !ehAdmin()) v = "inicio";
     if (v === "aulas" && document.querySelector('[data-nav="aulas"]').hidden) v = "inicio";
+    if (v === "equipe" && !st.minhas.length) v = "inicio";
     document.querySelectorAll("[data-nav]").forEach(function (a) { a.classList.toggle("active", a.getAttribute("data-nav") === v); });
     $("side").classList.remove("open");
-    var f = { inicio: telaInicio, pagina: telaPagina, cortes: telaCortes, aulas: telaAulas, conta: telaConta, admin: telaAdmin }[v];
+    var f = { inicio: telaInicio, pagina: telaPagina, cortes: telaCortes, equipe: telaEquipe, aulas: telaAulas, conta: telaConta, admin: telaAdmin }[v];
     f();
     window.scrollTo(0, 0);
     if (ancora) setTimeout(function () { irPara(ancora); }, 60);
@@ -733,7 +764,7 @@
     if (x.t === "mail") return '<a class="' + cls + '" href="mailto:' + SUPORTE + "?subject=" + encodeURIComponent(x.assunto || "") + '">' + esc(x.l) + "</a>";
     if (x.t === "convite") {
       var p = PLANOS.filter(function (y) { return y.id === x.p; })[0];
-      return '<a class="' + cls + '" href="' + esc(p.convite) + '" target="_blank" rel="noopener" data-convite="' + p.id + '">Afiliar ao ' + esc(p.nome) + " ↗</a>";
+      return '<a class="' + cls + '" href="' + esc(conviteDe(p)) + '" target="_blank" rel="noopener" data-convite="' + p.id + '">Afiliar ao ' + esc(p.nome) + " ↗</a>";
     }
     return "";
   }
@@ -756,6 +787,7 @@
       '<div class="jr-atalhos"><span>Ir para:</span>' + chip("sec-jornada", "Jornada") + chip("sec-consulta", "Consulta rápida") +
       '<a class="chip" href="#cortes">Vídeos para cortes</a>' + chip("sec-ganhos", "Quanto você ganha") + "</div>" +
       (!a ? '<div class="jr-aviso">Você está vendo a jornada como administrador, sem conta de parceiro. O progresso fica salvo só neste navegador.</div>' : "") +
+      (st.team ? '<div class="jr-aviso">Você faz parte da <b>' + esc(st.team.name) + '</b>. Na etapa 2, os botões de afiliação já levam aos produtos da equipe.</div>' : "") +
       topoJornada(pr, etapa, prox, a) +
       (paginaPronta() ? linhaLink() : "") +
       ajudaHtml() +
@@ -779,7 +811,7 @@
       var principal = acs.length ? acaoHtml(acs[0], true) : "";
       lado = '<div class="jr-next"><p class="eyebrow">Próxima tarefa</p><h3>' + esc(prox.titulo) + "</h3>" +
         '<p class="jr-next-meta">Etapa ' + (pr.atual + 1) + " · " + esc(etapa.titulo) + '<span class="tk-time">' + ICO_TEMPO + esc(prox.tempo) + "</span></p>" +
-        '<p class="jr-next-desc">' + esc(prox.desc) + "</p>" +
+        '<p class="jr-next-desc">' + esc(txtEq(prox.desc)) + "</p>" +
         '<div class="jr-acts">' + principal + '<button class="btn small" type="button" data-ir-tk="' + prox.id + '">Ver como fazer</button></div></div>';
     } else {
       lado = '<div class="jr-next"><p class="eyebrow">Tudo pronto</p><h3>Você completou as 8 etapas.</h3>' +
@@ -803,7 +835,7 @@
     return '<details class="et' + (ok ? " ok" : "") + (atual ? " atual" : "") + '" id="et-' + e.id + '" data-et="' + e.id + '"' + (st.abertas.has(e.id) ? " open" : "") + ">" +
       '<summary><span class="et-num">' + (ok ? ICO_CHECK : String(i + 1).padStart(2, "0")) + "</span>" +
       '<span class="et-txt"><small>Etapa ' + (i + 1) + " · " + esc(e.tempo) + (atual ? ' <span class="badge-now">Você está aqui</span>' : "") + "</small>" +
-      "<b>" + esc(e.titulo) + "</b><em>" + esc(e.sub) + "</em></span>" +
+      "<b>" + esc(e.titulo) + "</b><em>" + esc(txtEq(e.sub)) + "</em></span>" +
       '<span class="et-meta"><span class="et-count">' + feitas + " de " + tot + '</span><span class="et-bar"><i style="width:' + Math.round(feitas / tot * 100) + '%"></i></span></span>' +
       '<span class="et-chev" aria-hidden="true"></span></summary>' +
       '<div class="et-body">' + e.tarefas.map(function (t) { return tarefaHtml(t, a, ck, !!prox && prox.id === t.id); }).join("") +
@@ -820,10 +852,10 @@
       ' title="' + esc(dica) + '" aria-label="' + esc((feito ? "Concluída: " : "Marcar como feita: ") + t.titulo) + '">' + ICO_CHECK + "</button>" +
       '<div class="tk-main"><div class="tk-head"><h4>' + esc(t.titulo) + '</h4><span class="tk-time">' + ICO_TEMPO + esc(t.tempo) + "</span>" +
       (agora ? '<span class="badge-now">Agora</span>' : "") + "</div>" +
-      '<p class="tk-desc">' + esc(t.desc) + "</p>" + (t.extra ? t.extra(a) : "") +
+      '<p class="tk-desc">' + esc(txtEq(t.desc)) + "</p>" + (t.extra ? t.extra(a) : "") +
       '<details class="tk-more"' + (feito ? "" : " open") + "><summary>Como fazer</summary>" +
-      '<ol class="tk-steps">' + t.passos.map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ol>" +
-      '<p class="tk-ok"><b>Pronto quando:</b> ' + esc(t.pronto) + "</p>" +
+      '<ol class="tk-steps">' + t.passos.map(function (p) { return "<li>" + esc(txtEq(p)) + "</li>"; }).join("") + "</ol>" +
+      '<p class="tk-ok"><b>Pronto quando:</b> ' + esc(txtEq(t.pronto)) + "</p>" +
       (t.autoTxt ? '<p class="tk-auto">' + esc(t.autoTxt) + "</p>" : "") + "</details>" +
       (acs ? '<div class="tk-acts">' + acs + "</div>" : "") + "</div></div>";
   }
@@ -1000,7 +1032,7 @@
       '<div class="page-head"><p class="eyebrow">Pronta para divulgar</p><h1>Sua página de vendas<span class="dot">.</span></h1>' +
       "<p>É a página oficial da LowLab com os botões de compra apontando para os seus links de afiliado. Plano sem link salvo não aparece na sua página.</p></div>" +
       '<div class="panel"><p class="eyebrow">Antes de colar os links</p><h3>Afilie-se aos dois planos na Cakto</h3>' +
-      '<ol class="guia"><li>Clique nos botões abaixo e peça a afiliação. Se ainda não tiver conta na Cakto, ela pede para você criar. A aprovação é automática.<span class="guia-acts">' + botoesConvite(paginaPronta() ? "" : " gold") + "</span></li>" +
+      '<ol class="guia"><li>Clique nos botões abaixo e peça a afiliação. Se ainda não tiver conta na Cakto, ela pede para você criar. ' + txtEq("A aprovação é automática.") + '<span class="guia-acts">' + botoesConvite(paginaPronta() ? "" : " gold") + "</span></li>" +
       "<li>Na Cakto, abra <b>Produtos › Minhas Afiliações</b> e, no produto, clique em <b>Ver Links</b>. O Mensal se chama <b>LowLab Campus</b> e o Vitalício, <b>LowLab Vitalício</b>.</li>" +
       "<li>Copie o link completo de cada plano e cole no campo certo aqui embaixo, junto com seu apelido.</li></ol>" +
       '<p class="hint" style="font-size:14px;margin:0">Dúvida? ' + (matKey("afiliacao") ? '<button class="link inline" type="button" data-ler="' + esc(matKey("afiliacao").id) + '">Veja o passo a passo completo da afiliação</button> ou ' : "") +
@@ -1050,6 +1082,62 @@
     msg($("mPagina"), ambos ? "Tudo certo: sua página está no ar. Próximo passo em Meu espaço: teste a página como um cliente."
       : paginaPronta() ? "Salvo. Sua página está no ar com um plano; cole o link do outro plano para ele aparecer também."
       : "Salvo. Cole pelo menos um link para sua página aparecer.", "ok");
+  }
+
+  // ---------- Equipes (afiliado master) ----------
+  // O link do master é /parceiros/?equipe=apelido. O apelido fica guardado enquanto a pessoa faz o cadastro.
+  function equipeDoLink() {
+    var v = "";
+    try { v = new URLSearchParams(location.search).get("equipe") || sessionStorage.getItem("ll_equipe") || ""; } catch (e) {}
+    v = String(v).trim().toLowerCase();
+    if (!EQUIPE_OK.test(v)) return "";
+    try { sessionStorage.setItem("ll_equipe", v); } catch (e) {}
+    return v;
+  }
+  async function mostrarEquipeDoLink() {
+    var slug = equipeDoLink();
+    if (!slug) return;
+    var r = await sb.rpc("lowlab_team_name", { p_slug: slug });
+    if (r.error || !r.data) return;
+    var aviso = '<p class="eq-aviso">Você está entrando na <b>' + esc(r.data) + "</b>.</p>";
+    $("fCadastro").querySelector("h1").insertAdjacentHTML("afterend", aviso);
+    $("vNaoParceiro").querySelector("h1").insertAdjacentHTML("afterend", aviso);
+  }
+  function linkEquipe(t) { return SITE + "/parceiros/?equipe=" + t.slug + "#cadastro"; }
+
+  async function telaEquipe() {
+    var t = st.minhas[0];
+    if (!t) { location.hash = "inicio"; return; }
+    var link = linkEquipe(t);
+    render(
+      '<div class="page-head"><p class="eyebrow">Afiliado master</p><h1>' + esc(t.name) + '<span class="dot">.</span></h1>' +
+      "<p>Quem se cadastra pelo seu link entra na sua equipe e vende pelos produtos da equipe, com os mesmos 50% de comissão de qualquer parceiro. Você recebe 12,5% do valor de cada venda da equipe (já sem a taxa da Cakto), direto na sua conta da Cakto, como coprodutor dos dois produtos da equipe. O contrato de coprodução é de 6 meses e pode ser renovado.</p></div>" +
+      '<div class="panel"><p class="eyebrow">Seu link de cadastro · mande para quem vai entrar na sua equipe</p><div class="copy-row"><span>' + esc(link) + '</span><button class="btn small gold" type="button" data-copiar="' + esc(link) + '">Copiar</button></div>' +
+      '<p class="hint">Quem já vende pelos produtos normais da LowLab continua onde está: o link vale para quem está começando.</p></div>' +
+      '<div class="panel"><p class="eyebrow">Como funciona</p><ol class="guia">' +
+      "<li>A pessoa se cadastra pelo seu link e recebe o e-mail para criar a senha da Área de Parceiros.</li>" +
+      "<li>Na etapa 2 da jornada, ela pede a afiliação nos dois produtos da equipe. A LowLab aprova o pedido.</li>" +
+      "<li>Daí para frente, ela segue a jornada normal: página de vendas, conteúdo e lives. Acompanhe o progresso de cada um aqui embaixo.</li>" +
+      "<li>Você ganha só sobre as vendas do curso feitas pela equipe. Ninguém paga para entrar na equipe e você não ganha nada por cadastro.</li></ol></div>" +
+      '<section class="jr-sec" id="sec-equipe"><div class="jr-sec-head"><div><p class="eyebrow">Sua equipe</p><h2>Parceiros</h2></div></div><div id="eqLista"><div class="loader" style="margin:24px auto"></div></div></section>'
+    );
+    ligarCopiar();
+    var r = await sb.rpc("lowlab_my_team");
+    var el = $("eqLista"); if (!el) return;
+    if (r.error) { el.innerHTML = '<div class="empty">Não foi possível carregar a sua equipe agora. Tente de novo em instantes.</div>'; return; }
+    var lista = r.data || [];
+    if (!lista.length) { el.innerHTML = '<div class="mat-vazio"><p><b>Ninguém na equipe ainda.</b> Quando alguém se cadastrar pelo seu link, aparece aqui.</p></div>'; return; }
+    el.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Parceiro</th><th>Jornada</th><th>Afiliação</th><th>Desde</th></tr></thead><tbody>' + lista.map(function (x) {
+      var a = { slug: x.apelido, link_campus: x.tem_mensal ? "x" : null, link_circulo: x.tem_vitalicio ? "x" : null };
+      var ck = {}; var c = x.checklist && typeof x.checklist === "object" ? x.checklist : {};
+      Object.keys(c).forEach(function (k) { if (c[k]) ck[k] = 1; });
+      var pr = progresso(a, ck);
+      var etapa = pr.atual >= 0 ? "etapa " + (pr.atual + 1) + " · " + JORNADA[pr.atual].titulo : "jornada completa";
+      return "<tr><td><b>" + esc(x.nome) + "</b>" + (x.status !== "active" ? ' <span class="badge err">Bloqueado</span>' : "") + "</td>" +
+        "<td><small>" + pr.feitas + "/" + pr.total + " · " + esc(etapa) + "</small></td>" +
+        "<td>" + (x.tem_mensal ? '<span class="badge ok">Mensal</span> ' : "") + (x.tem_vitalicio ? '<span class="badge ok">Vitalício</span>' : "") + (!x.tem_mensal && !x.tem_vitalicio ? "<small>ainda não</small>" : "") + "</td>" +
+        "<td><small>" + new Date(x.desde).toLocaleDateString("pt-BR") + "</small></td></tr>";
+    }).join("") + "</tbody></table></div>";
   }
 
   // ---------- Aulas ----------
@@ -1237,9 +1325,17 @@
     var ids = (a.data || []).map(function (x) { return x.user_id; });
     var p = ids.length ? await sb.from("profiles").select("id,email,full_name").in("id", ids) : { data: [] };
     var porId = {}; (p.data || []).forEach(function (x) { porId[x.id] = x; });
+    // equipes (afiliado master): quem é de qual equipe e quem lidera
+    var eqs = await sb.from("affiliate_teams").select("id,name,master_user_id,active");
+    var tms = await sb.from("affiliates").select("user_id,team_id");
+    var eqPorId = {}, liderPor = {}, timeDe = {};
+    if (!eqs.error) (eqs.data || []).forEach(function (t) { eqPorId[t.id] = t; if (t.master_user_id) liderPor[t.master_user_id] = t; });
+    if (!tms.error) (tms.data || []).forEach(function (x) { if (x.team_id) timeDe[x.user_id] = x.team_id; });
     var linhas = (a.data || []).map(function (x) {
       var pr = porId[x.user_id] || {};
-      return "<tr><td><b>" + esc(pr.full_name || x.display_name || "—") + "</b><br><small>" + esc(pr.email || "") + "</small></td>" +
+      var eq = timeDe[x.user_id] && eqPorId[timeDe[x.user_id]], lider = liderPor[x.user_id];
+      return "<tr><td><b>" + esc(pr.full_name || x.display_name || "—") + "</b><br><small>" + esc(pr.email || "") + "</small>" +
+        (lider ? '<br><span class="badge ok">Master · ' + esc(lider.name) + "</span>" : "") + (eq ? '<br><span class="badge">' + esc(eq.name) + "</span>" : "") + "</td>" +
         "<td>" + jornadaCelula(x) + "</td>" +
         "<td>" + (x.slug ? '<a href="/p/' + esc(x.slug) + '" target="_blank" rel="noopener">/p/' + esc(x.slug) + "</a>" : "<small>sem página</small>") + "</td>" +
         "<td>" + (x.link_campus ? '<span class="badge ok">Mensal</span> ' : "") + (x.link_circulo ? '<span class="badge ok">Vitalício</span>' : "") + (!x.link_campus && !x.link_circulo ? "<small>nenhum</small>" : "") + "</td>" +
@@ -1363,6 +1459,7 @@
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: "pkce" }
   });
   sb.auth.onAuthStateChange(function (evento) { if (evento === "SIGNED_OUT") views("vEntrar"); });
-  if (/cadastro/.test(location.hash)) abaAuth("cadastro");
+  if (/cadastro/.test(location.hash) || equipeDoLink()) abaAuth("cadastro");
+  mostrarEquipeDoLink();
   carregar();
 })();

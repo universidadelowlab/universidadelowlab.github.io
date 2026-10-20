@@ -428,3 +428,7 @@ a.mat-row{font-weight:400;line-height:1.5}
   .vc-info{padding:0 4px}
   .vc-acts .btn{flex:1 1 auto}
 }
+/* Equipes (afiliado master) */
+.eq-aviso{margin:-4px 0 16px;padding:10px 14px;border-radius:12px;border:1px solid rgba(224,201,157,.35);background:rgba(199,166,106,.1);color:var(--muted);font-size:14px}
+.eq-aviso b{color:var(--cream)}
+#sec-equipe{margin-top:22px}
