@@ -488,7 +488,7 @@
           auto: lido("tour"), autoTxt: "Marca sozinha quando você abrir o tour.",
           desc: "Entre no campus com esta mesma conta, em modo demonstração. É o que você vai mostrar nas lives.",
           passos: [
-            "Abra o campus e veja os 13 módulos.",
+            "Abra o campus e veja os 14 módulos.",
             "Entre no módulo 1 e abra a aula 1, “A lógica do low ticket lucrativo”.",
             "Abra o Plano 30 dias e veja os três marcos.",
             "No tour, leia como mostrar a plataforma em 5 minutos."
@@ -903,7 +903,7 @@
   }
   function cartaoCampus() {
     return '<div class="panel"><p class="eyebrow">Para suas lives</p><h3>Campus em demonstração</h3>' +
-      '<p class="hint" style="font-size:14px;margin:6px 0 14px">Entre no campus com esta mesma conta para mostrar a plataforma: você vê os 13 módulos e o Plano 30 dias, e a aula 1 fica liberada para apresentar.</p>' +
+      '<p class="hint" style="font-size:14px;margin:6px 0 14px">Entre no campus com esta mesma conta para mostrar a plataforma: você vê os 14 módulos e o Plano 30 dias, e a aula 1 fica liberada para apresentar.</p>' +
       '<div class="tk-acts">' + acaoHtml({ t: "campus", l: "Abrir o campus" }, false) + acaoHtml({ t: "mat", k: "tour", l: "Como mostrar na live" }, false) + "</div></div>";
   }
 
