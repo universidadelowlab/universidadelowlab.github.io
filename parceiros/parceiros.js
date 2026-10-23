@@ -1296,8 +1296,11 @@
   }
   function lidoMat(m) { return !!(m.key && st.ck["m_" + m.key]); }
   // [fmt-start] transforma o texto simples do material em leitura organizada
+  // o link aparece sem "https://www." (cabe numa linha no celular); o endereço do link continua completo
   function fmtInline(t) {
-    return esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    return esc(t).replace(/(https?:\/\/[^\s<]+[^\s<.,;:!?)])/g, function (u) {
+      return '<a href="' + u + '" target="_blank" rel="noopener">' + u.replace(/^https?:\/\/(www\.)?/, "") + "</a>";
+    });
   }
   function fmtRotulo(t) {
     var m = t.match(/^([^:]{2,45}):\s+(.+)$/);
