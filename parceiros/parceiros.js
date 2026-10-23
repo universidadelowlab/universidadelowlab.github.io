@@ -26,7 +26,7 @@
   var AJUDA_WHATS = "5511952030011";
   var AJUDA_FONE = "(11) 95203-0011";
   var COLS_AFF = "user_id,status,slug,display_name,link_campus,link_circulo,created_at";
-  var VISTAS = ["inicio", "pagina", "cortes", "equipe", "aulas", "conta", "admin"];
+  var VISTAS = ["inicio", "pagina", "cortes", "consulta", "equipe", "aulas", "conta", "admin"];
   // Equipes de afiliado master: quem entra pelo link /parceiros/?equipe=apelido se afilia aos produtos da equipe.
   var EQUIPE_OK = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/;
   var CONVITE_BASE = "https://app.cakto.com.br/affiliate/invite/";
@@ -187,7 +187,10 @@
     $("modal").hidden = true; $("modalCorpo").innerHTML = "";
     if (!st.sujo) return;
     st.sujo = false;
-    if (vistaAtual() === "inicio") depoisDeMudar(st.antesModal || etapasFeitas());
+    var v = vistaAtual();
+    if (v === "inicio") depoisDeMudar(st.antesModal || etapasFeitas());
+    // na aba Consulta rápida: avisa se uma etapa foi concluída e atualiza o "Lido"
+    else if (v === "consulta") { depoisDeMudar(st.antesModal || etapasFeitas()); telaConsulta(true); }
   }
 
   // ---------- login / cadastro ----------
@@ -314,15 +317,15 @@
   function rota() {
     if ($("vApp").hidden) return;
     var v = vistaAtual(), ancora = null;
-    // o antigo "Material de apoio" agora é a Consulta rápida, dentro do Meu espaço
-    if (v === "material") { v = "inicio"; ancora = "sec-consulta"; history.replaceState(null, "", "#inicio"); }
+    // o antigo "Material de apoio" agora é a aba Consulta rápida
+    if (v === "material") { v = "consulta"; history.replaceState(null, "", "#consulta"); }
     if (VISTAS.indexOf(v) < 0) v = "inicio";
     if (v === "admin" && !ehAdmin()) v = "inicio";
     if (v === "aulas" && document.querySelector('[data-nav="aulas"]').hidden) v = "inicio";
     if (v === "equipe" && !st.minhas.length) v = "inicio";
     document.querySelectorAll("[data-nav]").forEach(function (a) { a.classList.toggle("active", a.getAttribute("data-nav") === v); });
     $("side").classList.remove("open");
-    var f = { inicio: telaInicio, pagina: telaPagina, cortes: telaCortes, equipe: telaEquipe, aulas: telaAulas, conta: telaConta, admin: telaAdmin }[v];
+    var f = { inicio: telaInicio, pagina: telaPagina, cortes: telaCortes, consulta: telaConsulta, equipe: telaEquipe, aulas: telaAulas, conta: telaConta, admin: telaAdmin }[v];
     f();
     window.scrollTo(0, 0);
     if (ancora) setTimeout(function () { irPara(ancora); }, 60);
@@ -782,20 +785,18 @@
     var nome = esc(primeiroNome());
     var titulo = !etapa ? "Jornada completa, " + nome : pr.feitas === 0 ? "Boas-vindas à parceria, " + nome : "Seu próximo passo, " + nome;
     var jornada = '<div class="jr-etapas" id="sec-jornada">' + JORNADA.map(function (e, i) { return etapaHtml(e, i, a, ck, pr, prox); }).join("") + "</div>";
-    var consulta = consultaRapida();
     var chip = function (id, txt) { return '<button class="chip" type="button" data-ir="' + id + '">' + txt + "</button>"; };
     render(
       '<div class="page-head"><p class="eyebrow">Sua jornada de parceiro</p><h1>' + titulo + '<span class="dot">.</span></h1>' +
-      "<p>São 8 etapas, do cadastro à rotina de vendas. Cada tarefa diz o que fazer, quanto tempo leva e quando está pronta. Marque ao terminar: o progresso fica salvo na sua conta. Os textos prontos ficam na Consulta rápida, nesta página, e os vídeos oficiais, na aba Vídeos para cortes.</p></div>" +
-      '<div class="jr-atalhos"><span>Ir para:</span>' + chip("sec-jornada", "Jornada") + chip("sec-consulta", "Consulta rápida") +
+      "<p>São 8 etapas, do cadastro à rotina de vendas. Cada tarefa diz o que fazer, quanto tempo leva e quando está pronta. Marque ao terminar: o progresso fica salvo na sua conta. Os textos prontos ficam na aba Consulta rápida, e os vídeos oficiais, na aba Vídeos para cortes.</p></div>" +
+      '<div class="jr-atalhos"><span>Ir para:</span>' + chip("sec-jornada", "Jornada") + '<a class="chip" href="#consulta">Consulta rápida</a>' +
       '<a class="chip" href="#cortes">Vídeos para cortes</a>' + chip("sec-ganhos", "Quanto você ganha") + "</div>" +
       (!a ? '<div class="jr-aviso">Você está vendo a jornada como administrador, sem conta de parceiro. O progresso fica salvo só neste navegador.</div>' : "") +
       (st.team ? '<div class="jr-aviso">Você faz parte da <b>' + esc(st.team.name) + '</b>. Na etapa 2, os botões de afiliação já levam aos produtos da equipe. Quem lidera a equipe acompanha o seu progresso e as suas vendas: para as vendas aparecerem, use na Cakto o mesmo e-mail da sua conta aqui.</div>' + recadoEquipeHtml(st.team) : "") +
       topoJornada(pr, etapa, prox, a) +
       (paginaPronta() ? linhaLink() : "") +
       ajudaHtml() +
-      // com a jornada completa, a consulta rápida sobe para o topo (é o uso do dia a dia)
-      (etapa ? jornada + consulta : consulta + jornada) +
+      jornada +
       '<div class="jr-extra">' + cartaoComissao() + cartaoCampus() + "</div>"
     );
     ligarJornada();
@@ -818,8 +819,8 @@
         '<div class="jr-acts">' + principal + '<button class="btn small" type="button" data-ir-tk="' + prox.id + '">Ver como fazer</button></div></div>';
     } else {
       lado = '<div class="jr-next"><p class="eyebrow">Tudo pronto</p><h3>Você completou as 8 etapas.</h3>' +
-        '<p class="jr-next-desc">Agora é rotina: vídeos todo dia, lives no mesmo horário e a revisão de sexta. Os textos prontos estão na Consulta rápida, logo abaixo, e material novo aparece lá.</p>' +
-        '<div class="jr-acts">' + acaoHtml({ t: "mat", k: "rotina", l: "Ver a rotina da semana" }, true) + '<button class="btn small" type="button" data-ir="sec-consulta">Abrir a consulta rápida</button></div></div>';
+        '<p class="jr-next-desc">Agora é rotina: vídeos todo dia, lives no mesmo horário e a revisão de sexta. Os textos prontos estão na aba Consulta rápida, e material novo aparece lá.</p>' +
+        '<div class="jr-acts">' + acaoHtml({ t: "mat", k: "rotina", l: "Ver a rotina da semana" }, true) + '<a class="btn small" href="#consulta">Abrir a Consulta rápida</a></div></div>';
     }
     return '<div class="jr-top"><div class="jr-prog"><div class="jr-ring" style="--p:' + pct + '" role="img" aria-label="' + pct + '% da jornada concluída"><b>' + pct + "%</b></div>" +
       '<div class="jr-prog-txt"><p class="eyebrow">Seu progresso</p><h3>' + pr.feitas + " de " + pr.total + " tarefas</h3><p>" +
@@ -907,10 +908,11 @@
       '<div class="tk-acts">' + acaoHtml({ t: "campus", l: "Abrir o campus" }, false) + acaoHtml({ t: "mat", k: "tour", l: "Como mostrar na live" }, false) + "</div></div>";
   }
 
-  // Consulta rápida: todos os textos prontos num lugar só, para o dia a dia (substitui a antiga aba Material de apoio).
-  function consultaRapida() {
+  // ---------- Consulta rápida (aba própria no menu) ----------
+  // Todos os textos prontos num lugar só, para o dia a dia (substitui a antiga aba Material de apoio).
+  function telaConsulta(manterScroll) {
+    var y = window.scrollY;
     var textos = st.materials.filter(function (m) { return m.active && m.kind === "text" && secaoDe(m) !== "videos"; });
-    if (!textos.length) return "";
     var regras = matKey("regras");
     var lidos = textos.filter(lidoMat).length;
     var grupos = SECOES.filter(function (s) { return s.id !== "videos"; }).map(function (s) {
@@ -918,10 +920,18 @@
       if (!itens.length) return "";
       return '<div class="cr-grupo"><p class="cr-tit">' + esc(s.titulo) + '</p><div class="cr-grid">' + itens.map(itemConsulta).join("") + "</div></div>";
     }).join("");
-    return '<section class="jr-sec" id="sec-consulta"><div class="jr-sec-head"><div><p class="eyebrow">Para o dia a dia</p><h2>Consulta rápida</h2>' +
-      "<p>Os textos prontos de todas as etapas, num lugar só: roteiro da live, ganchos, mensagens e respostas. Você já abriu " + lidos + " de " + textos.length + ".</p></div></div>" +
-      '<div class="cr-aviso"><p><b>Antes de postar:</b> sem promessa de ganho ou resultado, sem print de venda que não é seu ou que foi alterado, sem o nome LowLab em perfil, página ou domínio próprio e sem spam. Quem descumpre recebe uma advertência; na segunda vez, sai do programa.</p>' +
-      (regras ? '<button class="btn small" type="button" data-ler="' + esc(regras.id) + '">Ler as regras</button>' : "") + "</div>" + grupos + "</section>";
+    render(
+      '<div class="page-head"><p class="eyebrow">Para o dia a dia</p><h1>Consulta rápida<span class="dot">.</span></h1>' +
+      "<p>Os textos prontos de todas as etapas, num lugar só: roteiro da live, ganchos, mensagens e respostas. Material novo aparece aqui." +
+      (textos.length ? " Você já abriu <b>" + lidos + " de " + textos.length + "</b>." : "") + "</p></div>" +
+      (textos.length
+        ? '<section class="jr-sec" id="sec-consulta"><div class="cr-aviso"><p><b>Antes de postar:</b> sem promessa de ganho ou resultado, sem print de venda que não é seu ou que foi alterado, sem o nome LowLab em perfil, página ou domínio próprio e sem spam. Quem descumpre recebe uma advertência; na segunda vez, sai do programa.</p>' +
+          (regras ? '<button class="btn small" type="button" data-ler="' + esc(regras.id) + '">Ler as regras</button>' : "") + "</div>" + grupos + "</section>"
+        : '<div class="mat-vazio"><p><b>Nenhum texto por enquanto.</b> Quando a LowLab publicar um texto pronto, ele aparece aqui.</p></div>')
+    );
+    document.querySelectorAll("#conteudo [data-ler]").forEach(function (b) { b.addEventListener("click", function () { lerMaterial(b.getAttribute("data-ler")); }); });
+    ligarCopiar();
+    if (manterScroll) window.scrollTo(0, y);
   }
   function itemConsulta(m) {
     var lido = lidoMat(m), r = resumoDe(m);
